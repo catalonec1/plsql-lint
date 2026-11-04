@@ -1,7 +1,6 @@
 # plsql-lint
 
 [![CI](https://github.com/catalonec1/plsql-lint/actions/workflows/ci.yml/badge.svg)](https://github.com/catalonec1/plsql-lint/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/plsql-lint.svg)](https://pypi.org/project/plsql-lint/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A fast, dependency-free linter for **Oracle SQL and PL/SQL**, written in pure Python.
@@ -9,7 +8,7 @@ It catches the bugs that slip through code review in every Oracle shop:
 `WHEN OTHERS THEN NULL`, `= NULL`, `COMMIT` inside loops, SQL injection through
 concatenated dynamic SQL, `ROWNUM` before `ORDER BY`, and more.
 
-- No database connection, no Java, no runtime dependencies (only `tomli` on Python < 3.11). `pip install` and run.
+- No database connection, no Java, no runtime dependencies (only `tomli` on Python < 3.11). Install and run.
 - Understands comments, string literals and `q'[...]'` quoting, so it never flags text inside them.
 - Output for humans, JSON for tools, and native GitHub annotations for pull requests.
 - Works as a CLI, a pre-commit hook, a GitHub Action, or a Python library.
@@ -28,8 +27,11 @@ Found 5 issue(s).
 ## Install
 
 ```bash
-pip install plsql-lint        # or: pipx install plsql-lint
+pip install git+https://github.com/catalonec1/plsql-lint@v0.1.0
+# or pipx: pipx install git+https://github.com/catalonec1/plsql-lint@v0.1.0
 ```
+
+Wheels are also attached to every [GitHub release](https://github.com/catalonec1/plsql-lint/releases).
 
 Python 3.9 or newer.
 
@@ -142,8 +144,7 @@ and a negative example.
 ## Support the project
 
 If plsql-lint saves you a production incident, you can support its development
-through [GitHub Sponsors](https://github.com/sponsors/catalonec1) or
-[Ko-fi](https://ko-fi.com/catalonec1).
+through [GitHub Sponsors](https://github.com/sponsors/catalonec1).
 
 ## License
 

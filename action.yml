@@ -11,8 +11,8 @@ inputs:
     description: Extra arguments for plsql-lint (e.g. --ignore PLL006)
     default: ""
   version:
-    description: plsql-lint version from PyPI (empty = latest)
-    default: ""
+    description: plsql-lint git tag to install (default v0.1.0)
+    default: "v0.1.0"
 runs:
   using: composite
   steps:
@@ -21,5 +21,5 @@ runs:
         python-version: "3.12"
     - shell: bash
       run: |
-        if [ -n "${{ inputs.version }}" ]; then pip install "plsql-lint==${{ inputs.version }}"; else pip install plsql-lint; fi
+        pip install "git+https://github.com/catalonec1/plsql-lint@${{ inputs.version }}"
         plsql-lint --format github ${{ inputs.args }} ${{ inputs.paths }}

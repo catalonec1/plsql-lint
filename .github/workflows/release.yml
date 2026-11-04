@@ -1,0 +1,23 @@
+name: GitHub Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install build pytest && pip install -e . && pytest -q
+      - run: python -m build
+      - name: Create release with wheel and sdist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "plsql-lint $GITHUB_REF_NAME" \
+            --notes-file CHANGELOG.md
