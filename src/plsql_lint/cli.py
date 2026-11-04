@@ -26,7 +26,10 @@ def _load_file_config(start: str) -> dict:
     try:
         import tomllib  # Python 3.11+
     except ModuleNotFoundError:  # pragma: no cover
-        return {}
+        try:
+            import tomli as tomllib  # backport, installed on Python < 3.11
+        except ModuleNotFoundError:
+            return {}
     for name, section in ((".plsql-lint.toml", None), ("pyproject.toml", "plsql-lint")):
         path = os.path.join(start, name)
         if not os.path.isfile(path):

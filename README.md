@@ -9,7 +9,7 @@ It catches the bugs that slip through code review in every Oracle shop:
 `WHEN OTHERS THEN NULL`, `= NULL`, `COMMIT` inside loops, SQL injection through
 concatenated dynamic SQL, `ROWNUM` before `ORDER BY`, and more.
 
-- No database connection, no Java, no dependencies. `pip install` and run.
+- No database connection, no Java, no runtime dependencies (only `tomli` on Python < 3.11). `pip install` and run.
 - Understands comments, string literals and `q'[...]'` quoting, so it never flags text inside them.
 - Output for humans, JSON for tools, and native GitHub annotations for pull requests.
 - Works as a CLI, a pre-commit hook, a GitHub Action, or a Python library.
@@ -87,7 +87,7 @@ max-line-length = 140
 min-severity = "warning"
 ```
 
-Command line options take precedence. Reading the config file needs Python 3.11+.
+Command line options take precedence.
 
 ## pre-commit
 
@@ -105,7 +105,7 @@ repos:
 Findings appear as annotations on the pull request diff.
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v5
 - uses: catalonec1/plsql-lint@v0.1.0
   with:
     paths: db/
