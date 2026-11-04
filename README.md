@@ -27,11 +27,11 @@ Found 5 issue(s).
 ## Install
 
 ```bash
-pip install git+https://github.com/catalonec1/plsql-lint@v0.1.0
-# or pipx: pipx install git+https://github.com/catalonec1/plsql-lint@v0.1.0
+pip install git+https://github.com/catalonec1/plsql-lint@main
+# or pipx: pipx install git+https://github.com/catalonec1/plsql-lint@main
 ```
 
-Wheels are also attached to every [GitHub release](https://github.com/catalonec1/plsql-lint/releases).
+A PyPI package (`pip install plsql-lint`) is planned.
 
 Python 3.9 or newer.
 
@@ -96,7 +96,7 @@ Command line options take precedence.
 ```yaml
 repos:
   - repo: https://github.com/catalonec1/plsql-lint
-    rev: v0.1.0
+    rev: main
     hooks:
       - id: plsql-lint
         args: [--min-severity, warning]
@@ -108,7 +108,7 @@ Findings appear as annotations on the pull request diff.
 
 ```yaml
 - uses: actions/checkout@v5
-- uses: catalonec1/plsql-lint@v0.1.0
+- uses: catalonec1/plsql-lint@main
   with:
     paths: db/
     args: --ignore PLL006

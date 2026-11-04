@@ -11,8 +11,8 @@ inputs:
     description: Extra arguments for plsql-lint (e.g. --ignore PLL006)
     default: ""
   version:
-    description: plsql-lint git tag to install (default v0.1.0)
-    default: "v0.1.0"
+    description: plsql-lint git ref to install (default main)
+    default: "main"
 runs:
   using: composite
   steps:
