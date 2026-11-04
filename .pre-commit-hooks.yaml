@@ -1,0 +1,7 @@
+- id: plsql-lint
+  name: plsql-lint
+  description: Lint Oracle SQL and PL/SQL files
+  entry: plsql-lint
+  language: python
+  types: [file]
+  files: \.(sql|pls|plb|pks|pkb|pck|prc|fnc|trg|tps|tpb|bdy|spc|vw)$

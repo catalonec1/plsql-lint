@@ -1,0 +1,25 @@
+name: plsql-lint
+description: Lint Oracle SQL and PL/SQL files and annotate the pull request.
+branding:
+  icon: database
+  color: red
+inputs:
+  paths:
+    description: Files or directories to lint
+    default: "."
+  args:
+    description: Extra arguments for plsql-lint (e.g. --ignore PLL006)
+    default: ""
+  version:
+    description: plsql-lint version from PyPI (empty = latest)
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then pip install "plsql-lint==${{ inputs.version }}"; else pip install plsql-lint; fi
+        plsql-lint --format github ${{ inputs.args }} ${{ inputs.paths }}

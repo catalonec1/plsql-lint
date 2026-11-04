@@ -1,0 +1,15 @@
+CREATE OR REPLACE PROCEDURE load_orders IS
+  v_cnt NUMBER;
+BEGIN
+  FOR r IN (SELECT * FROM orders WHERE status = NULL) LOOP
+    UPDATE orders SET processed = NULL WHERE id = r.id;
+    COMMIT;
+  END LOOP;
+  EXECUTE IMMEDIATE 'DELETE FROM ' || p_table || ' WHERE id = ' || p_id;
+  DBMS_OUTPUT.PUT_LINE('done');
+  RAISE_APPLICATION_ERROR(-1234, 'bad');
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END;
+/

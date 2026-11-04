@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plsql-lint"
+dynamic = ["version"]
+description = "Fast, dependency-free linter for Oracle SQL and PL/SQL: catches WHEN OTHERS THEN NULL, = NULL, COMMIT in loops, SQL injection and more."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [{ name = "Dragos Harea" }]
+keywords = ["oracle", "plsql", "pl/sql", "sql", "linter", "lint", "static-analysis", "code-quality"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: SQL",
+  "Topic :: Database",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+plsql-lint = "plsql_lint.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/catalonec1/plsql-lint"
+Issues = "https://github.com/catalonec1/plsql-lint/issues"
+Funding = "https://github.com/sponsors/catalonec1"
+
+[tool.hatch.version]
+path = "src/plsql_lint/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plsql_lint"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
