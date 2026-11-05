@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>DBMS_OUTPUT left in code; use a logging package instead.</p>
+
+<p>Example:</p>
+<pre><code>DBMS_OUTPUT.PUT_LINE(&#x27;debug &#x27; || l_id);</code></pre>
+<p>Better:</p>
+<pre><code>logger.log(&#x27;processing &#x27; || l_id);</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL006</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL006</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

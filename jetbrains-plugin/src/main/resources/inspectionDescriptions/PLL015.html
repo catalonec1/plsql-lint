@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>TO_DATE / TO_TIMESTAMP without a format mask depends on NLS settings.</p>
+
+<p>Example:</p>
+<pre><code>l_d := TO_DATE(p_text);</code></pre>
+<p>Better:</p>
+<pre><code>l_d := TO_DATE(p_text, &#x27;YYYY-MM-DD&#x27;);</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL015</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL015</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

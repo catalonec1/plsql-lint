@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>Password written in source with IDENTIFIED BY.</p>
+<p><b>Pro check.</b> Requires a PL/SQL Lint Pro licence or the free trial; without it this inspection reports nothing.</p>
+<p>Example:</p>
+<pre><code>CREATE USER app IDENTIFIED BY &quot;Secret123&quot;;</code></pre>
+<p>Better:</p>
+<pre><code>CREATE USER app IDENTIFIED BY &amp;app_password;</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL019</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL019</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

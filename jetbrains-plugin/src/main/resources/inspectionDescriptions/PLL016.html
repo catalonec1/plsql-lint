@@ -1,0 +1,16 @@
+<html>
+<body>
+<p>SELECT COUNT(*) INTO used to test existence; counts every row.</p>
+<p><b>Pro check.</b> Requires a PL/SQL Lint Pro licence or the free trial; without it this inspection reports nothing.</p>
+<p>Example:</p>
+<pre><code>SELECT COUNT(*) INTO l_cnt FROM orders WHERE customer_id = p_id;
+IF l_cnt &gt; 0 THEN</code></pre>
+<p>Better:</p>
+<pre><code>SELECT COUNT(*) INTO l_cnt FROM orders
+ WHERE customer_id = p_id AND ROWNUM = 1;
+IF l_cnt &gt; 0 THEN</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL016</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL016</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>SELECT * makes code break silently when columns change.</p>
+
+<p>Example:</p>
+<pre><code>SELECT * FROM orders;</code></pre>
+<p>Better:</p>
+<pre><code>SELECT id, status, created FROM orders;</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL002</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL002</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

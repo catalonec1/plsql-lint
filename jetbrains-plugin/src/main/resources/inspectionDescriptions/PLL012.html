@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>Comparison with &#x27;&#x27; is never true: Oracle treats the empty string as NULL.</p>
+
+<p>Example:</p>
+<pre><code>IF l_name = &#x27;&#x27; THEN</code></pre>
+<p>Better:</p>
+<pre><code>IF l_name IS NULL THEN</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL012</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL012</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

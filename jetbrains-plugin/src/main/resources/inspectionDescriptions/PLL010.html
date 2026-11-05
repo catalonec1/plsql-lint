@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>RAISE_APPLICATION_ERROR number outside -20000..-20999 (raises ORA-21000).</p>
+
+<p>Example:</p>
+<pre><code>RAISE_APPLICATION_ERROR(-30001, &#x27;bad input&#x27;);</code></pre>
+<p>Better:</p>
+<pre><code>RAISE_APPLICATION_ERROR(-20001, &#x27;bad input&#x27;);</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL010</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL010</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

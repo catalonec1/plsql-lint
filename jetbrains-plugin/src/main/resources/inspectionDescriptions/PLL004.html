@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>Comparison with NULL using = or &lt;&gt; is never true; use IS [NOT] NULL.</p>
+
+<p>Example:</p>
+<pre><code>WHERE closed_at = NULL</code></pre>
+<p>Better:</p>
+<pre><code>WHERE closed_at IS NULL</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL004</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL004</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

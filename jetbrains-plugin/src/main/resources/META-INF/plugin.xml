@@ -1,0 +1,112 @@
+<idea-plugin>
+    <id>io.github.catalonec1.plsql-lint</id>
+    <name>PL/SQL Lint</name>
+    <vendor url="https://github.com/catalonec1/plsql-lint">catalonec1</vendor>
+
+    <description><![CDATA[
+<p>Static analysis for <b>Oracle SQL and PL/SQL</b> right in the editor. Catches the bugs that slip through
+code review in every Oracle shop, with no database connection and no setup.</p>
+
+<p><b>Free checks</b> (15 rules):</p>
+<ul>
+  <li><code>WHEN OTHERS THEN NULL</code> and handlers that never re-raise</li>
+  <li><code>= NULL</code> / <code>&lt;&gt; NULL</code> and comparisons with <code>''</code> (always false in Oracle)</li>
+  <li><code>COMMIT</code> / <code>ROLLBACK</code> inside loops</li>
+  <li>Dynamic SQL built with <code>||</code> (SQL injection)</li>
+  <li><code>ROWNUM</code> filtered before <code>ORDER BY</code>, <code>NOT IN (SELECT ...)</code> with NULLs</li>
+  <li><code>RAISE_APPLICATION_ERROR</code> numbers outside -20000..-20999, <code>TO_DATE</code> without a mask</li>
+  <li><code>SELECT *</code>, <code>VARCHAR</code>, <code>DBMS_OUTPUT</code>, <code>GOTO</code>, <code>END;</code> without the unit name</li>
+</ul>
+
+<p><b>Pro checks and quick fixes</b> (licence or free trial):</p>
+<ul>
+  <li>Row-by-row DML inside cursor <code>FOR</code> loops (use <code>BULK COLLECT</code> + <code>FORALL</code>)</li>
+  <li><code>PRAGMA AUTONOMOUS_TRANSACTION</code> with DML but no <code>COMMIT</code> (ORA-06519)</li>
+  <li><code>UPDATE</code> / <code>DELETE</code> without <code>WHERE</code></li>
+  <li>Passwords written in source (<code>IDENTIFIED BY</code>)</li>
+  <li><code>SELECT COUNT(*) INTO</code> used only to test existence</li>
+  <li>One-click fixes: <code>= NULL</code> &rarr; <code>IS NULL</code>, <code>= ''</code> &rarr; <code>IS NULL</code>,
+      <code>VARCHAR</code> &rarr; <code>VARCHAR2</code>, add the unit name after <code>END</code></li>
+</ul>
+
+<p>Works on <code>.sql .pks .pkb .pls .plb .pck .prc .fnc .trg .tps .tpb .bdy .spc .vw</code> files in DataGrip,
+IntelliJ IDEA, PyCharm and every other JetBrains IDE. Each rule is a separate inspection under
+<i>Settings | Editor | Inspections | SQL | PL/SQL Lint</i>. Suppress a line with <code>-- noqa: PLL001</code>.
+The same rules run in CI with the free command-line tool
+<a href="https://github.com/catalonec1/plsql-lint">plsql-lint</a>.</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="PL/SQL Lint Pro" displayType="BALLOON"/>
+        <localInspection shortName="PLL001" displayName="PLL001 when-others-no-raise" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll001Inspection"/>
+        <localInspection shortName="PLL002" displayName="PLL002 select-star" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll002Inspection"/>
+        <localInspection shortName="PLL003" displayName="PLL003 commit-in-loop" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll003Inspection"/>
+        <localInspection shortName="PLL004" displayName="PLL004 compare-with-null" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll004Inspection"/>
+        <localInspection shortName="PLL005" displayName="PLL005 dynamic-sql-concat" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll005Inspection"/>
+        <localInspection shortName="PLL006" displayName="PLL006 dbms-output" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll006Inspection"/>
+        <localInspection shortName="PLL007" displayName="PLL007 goto" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll007Inspection"/>
+        <localInspection shortName="PLL008" displayName="PLL008 rownum-order-by" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll008Inspection"/>
+        <localInspection shortName="PLL009" displayName="PLL009 line-too-long" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="false" level="WEAK WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll009Inspection"/>
+        <localInspection shortName="PLL010" displayName="PLL010 raise-app-error-range" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll010Inspection"/>
+        <localInspection shortName="PLL011" displayName="PLL011 end-without-name" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll011Inspection"/>
+        <localInspection shortName="PLL012" displayName="PLL012 compare-with-empty-string" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll012Inspection"/>
+        <localInspection shortName="PLL013" displayName="PLL013 varchar-type" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll013Inspection"/>
+        <localInspection shortName="PLL014" displayName="PLL014 not-in-subquery" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll014Inspection"/>
+        <localInspection shortName="PLL015" displayName="PLL015 to-date-no-format" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll015Inspection"/>
+        <localInspection shortName="PLL016" displayName="PLL016 count-for-existence (Pro)" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll016Inspection"/>
+        <localInspection shortName="PLL017" displayName="PLL017 row-by-row-dml (Pro)" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll017Inspection"/>
+        <localInspection shortName="PLL018" displayName="PLL018 autonomous-no-commit (Pro)" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll018Inspection"/>
+        <localInspection shortName="PLL019" displayName="PLL019 hardcoded-password (Pro)" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll019Inspection"/>
+        <localInspection shortName="PLL020" displayName="PLL020 dml-without-where (Pro)" groupPath="SQL" groupName="PL/SQL Lint"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="io.github.catalonec1.plsqllint.ide.rules.Pll020Inspection"/>
+    </extensions>
+
+    <actions>
+        <action id="PlsqlLint.Register" class="io.github.catalonec1.plsqllint.ide.RegisterAction"
+                text="PL/SQL Lint Pro: Register or Start Trial"
+                description="Activate the Pro checks and quick fixes of PL/SQL Lint">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

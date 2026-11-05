@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>ROWNUM filter combined with ORDER BY in the same query (filter runs first).</p>
+
+<p>Example:</p>
+<pre><code>SELECT id FROM t WHERE ROWNUM &lt;= 10 ORDER BY created DESC;</code></pre>
+<p>Better:</p>
+<pre><code>SELECT id FROM t ORDER BY created DESC FETCH FIRST 10 ROWS ONLY;</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL008</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL008</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

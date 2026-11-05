@@ -1,0 +1,13 @@
+PL/SQL Lint for JetBrains IDEs (the "plugin")
+Copyright (c) 2026 catalonec1. All rights reserved.
+
+The source code in this directory is published for transparency. It is not
+open source: you may read it and build it for your own evaluation, but you may
+not redistribute it, publish builds of it, or remove or bypass its licence
+checks. Licences are sold through JetBrains Marketplace.
+
+Exceptions:
+- core/ is a Java port of the MIT-licensed plsql-lint rules (see ../LICENSE)
+  and is available under the same MIT licence.
+- src/main/java/io/github/catalonec1/plsqllint/ide/CheckLicense.java is adapted
+  from JetBrains' marketplace-makemecoffee-plugin sample, Apache License 2.0.

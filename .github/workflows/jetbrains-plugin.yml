@@ -1,0 +1,37 @@
+name: JetBrains plugin
+on:
+  push:
+    paths: ["jetbrains-plugin/**", ".github/workflows/jetbrains-plugin.yml"]
+  pull_request:
+    paths: ["jetbrains-plugin/**", ".github/workflows/jetbrains-plugin.yml"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jetbrains-plugin
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Free disk space for the IDE downloads
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+      - name: Engine tests (parity with the Python rules + Pro rules)
+        run: ./gradlew -p core test
+      - name: Build plugin
+        run: ./gradlew buildPlugin
+      - name: Verify plugin (IntelliJ IDEA 2024.3, DataGrip 2025.2)
+        run: ./gradlew verifyPlugin
+      - uses: actions/upload-artifact@v5
+        with:
+          name: plsql-lint-plugin
+          path: jetbrains-plugin/build/distributions/*.zip
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: verifier-report
+          path: jetbrains-plugin/build/reports/pluginVerifier
