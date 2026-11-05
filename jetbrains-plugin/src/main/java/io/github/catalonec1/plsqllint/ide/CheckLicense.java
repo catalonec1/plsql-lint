@@ -140,9 +140,9 @@ public class CheckLicense {
       registerAction = actionManager.getAction("Register");
     }
     if (registerAction != null) {
-      // This API is available starting from IDE version 243.*.
+      // invokeAction works on 2024.3 (243) and newer.
       // For older IDE versions, use: registerAction.actionPerformed(AnActionEvent.createFromDataContext("", new Presentation(), asDataContext(productCode, message)))
-      ActionUtil.performAction(registerAction, AnActionEvent.createEvent(asDataContext(productCode, message), new Presentation(), "", ActionUiKind.NONE, null));
+      ActionUtil.invokeAction(registerAction, asDataContext(productCode, message), "", null, null);
     }
   }
 
