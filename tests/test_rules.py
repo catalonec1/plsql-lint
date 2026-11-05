@@ -247,3 +247,30 @@ def test_cli_extend_select(tmp_path, capsys):
     assert main([str(f), "--extend-select", "PLL009", "--format", "json"]) == 1
     found = {d["code"] for d in json.loads(capsys.readouterr().out)}
     assert found == {"PLL002", "PLL009"}
+
+
+# ---------------------------------------------------------------- 0.2.0
+def test_empty_string_compare():
+    assert codes("BEGIN IF x = '' THEN y; END IF; END;") == ["PLL012"]
+    assert codes("SELECT a FROM t WHERE b <> '';") == ["PLL012"]
+    assert codes("UPDATE t SET b = '' WHERE id = 1;") == []
+    assert codes("BEGIN IF x = 'a' THEN y; END IF; END;") == []
+
+
+def test_varchar_type():
+    assert codes("DECLARE v VARCHAR(10); BEGIN NULL; END;") == ["PLL013"]
+    assert codes("DECLARE v VARCHAR2(10); BEGIN NULL; END;") == []
+    assert codes("SELECT 'VARCHAR(10)' AS s FROM dual;") == []
+
+
+def test_not_in_subquery():
+    assert codes("SELECT a FROM t WHERE id NOT IN (SELECT pid FROM p);") == ["PLL014"]
+    assert codes("SELECT a FROM t WHERE id NOT IN (1, 2);") == []
+    assert codes("SELECT a FROM t WHERE NOT EXISTS (SELECT 1 FROM p WHERE p.id = t.id);") == []
+
+
+def test_to_date_without_mask():
+    assert codes("SELECT TO_DATE(s) FROM t;") == ["PLL015"]
+    assert codes("SELECT TO_DATE(SUBSTR(s, 1, 10)) FROM t;") == ["PLL015"]
+    assert codes("SELECT TO_DATE(s, 'YYYY-MM-DD') FROM t;") == []
+    assert codes("SELECT TO_TIMESTAMP(SUBSTR(s, 1, 10), 'YYYY-MM-DD') FROM t;") == []

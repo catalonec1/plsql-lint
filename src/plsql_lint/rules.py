@@ -387,3 +387,74 @@ def _unit_end(toks: list[Token], start: int) -> int | None:
         if t.is_word("CREATE") and k > start:
             return None
     return None
+
+
+# --------------------------------------------------------------------------- #
+# 0.2.0 rules
+# --------------------------------------------------------------------------- #
+
+@rule("PLL012", "compare-with-empty-string", Severity.ERROR,
+      "Comparison with '' is never true: Oracle treats the empty string as NULL.")
+def _empty_string(ctx: Context):
+    toks = ctx.tokens
+    for i, tok in enumerate(toks):
+        if tok.kind is not Kind.SYMBOL or tok.text not in _COMPARE:
+            continue
+        for side in (ctx.next_word(i), ctx.prev(i)):
+            if side is not None and side.kind is Kind.STRING and side.text in ("''", "N''", "n''"):
+                if tok.text == "=" and _in_set_clause(toks, i):
+                    break
+                op = "IS NULL" if tok.text == "=" else "IS NOT NULL"
+                yield (tok, f"'' is NULL in Oracle, so '{tok.text} ''' is never true; use {op}")
+                break
+
+
+@rule("PLL013", "varchar-type", Severity.INFO,
+      "VARCHAR declared instead of VARCHAR2 (Oracle reserves VARCHAR for future semantics).")
+def _varchar(ctx: Context):
+    toks = ctx.tokens
+    for i, tok in enumerate(toks):
+        if tok.is_word("VARCHAR"):
+            nxt = ctx.next_word(i)
+            if nxt is not None and nxt.kind is Kind.SYMBOL and nxt.text in ("(", ";", ",", ":="):
+                yield (tok, "use VARCHAR2 instead of VARCHAR")
+
+
+@rule("PLL014", "not-in-subquery", Severity.WARNING,
+      "NOT IN (SELECT ...) returns no rows when the subquery yields a NULL; prefer NOT EXISTS.")
+def _not_in(ctx: Context):
+    toks = ctx.tokens
+    for i in range(len(toks) - 3):
+        if toks[i].is_word("NOT") and toks[i + 1].is_word("IN") and toks[i + 2].text == "(" \
+                and toks[i + 3].is_word("SELECT", "WITH"):
+            yield (toks[i], "NOT IN with a subquery matches nothing if the subquery returns a NULL; "
+                   "use NOT EXISTS or filter NULLs in the subquery")
+
+
+@rule("PLL015", "to-date-no-format", Severity.WARNING,
+      "TO_DATE / TO_TIMESTAMP without a format mask depends on NLS settings.")
+def _to_date(ctx: Context):
+    toks = ctx.tokens
+    for i, tok in enumerate(toks):
+        if not tok.is_word("TO_DATE", "TO_TIMESTAMP", "TO_TIMESTAMP_TZ"):
+            continue
+        if i + 1 >= len(toks) or toks[i + 1].text != "(":
+            continue
+        depth, args = 0, 1
+        for j in range(i + 1, len(toks)):
+            t = toks[j]
+            if t.kind is not Kind.SYMBOL:
+                continue
+            if t.text == "(":
+                depth += 1
+            elif t.text == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            elif t.text == "," and depth == 1:
+                args += 1
+            elif t.text == ";":
+                break
+        if args == 1:
+            yield (tok, f"{tok.norm} without a format mask uses NLS_DATE_FORMAT; "
+                   f"pass an explicit mask, e.g. {tok.norm}(x, 'YYYY-MM-DD')")
