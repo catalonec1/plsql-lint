@@ -26,6 +26,13 @@ jobs:
         run: ./gradlew buildPlugin
       - name: Verify plugin (IntelliJ IDEA 2024.3, DataGrip 2025.2)
         run: ./gradlew verifyPlugin
+      - name: Print plugin zip (base64) for environments that cannot download artifacts
+        run: |
+          f=$(ls build/distributions/*.zip)
+          sha256sum "$f"
+          echo "BEGIN-PLUGIN-ZIP $(basename "$f")"
+          base64 -w 2000 "$f"
+          echo "END-PLUGIN-ZIP"
       - uses: actions/upload-artifact@v5
         with:
           name: plsql-lint-plugin
