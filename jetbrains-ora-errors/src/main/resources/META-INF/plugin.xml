@@ -1,0 +1,53 @@
+<idea-plugin>
+    <id>io.github.catalonec1.ora-error-helper</id>
+    <name>ORA Error Helper</name>
+    <vendor url="https://github.com/catalonec1/plsql-lint">catalonec1</vendor>
+
+    <description><![CDATA[
+<p>Explains <b>Oracle ORA-, PLS- and TNS- errors</b> inside the IDE: what the error means, the usual causes and
+how to fix it. Works offline, needs no database connection, and runs in every JetBrains IDE
+(IntelliJ IDEA, DataGrip, PyCharm, Rider, WebStorm...).</p>
+
+<ul>
+  <li><b>Explain Oracle Error</b> in the editor and console context menu: put the caret on <code>ORA-01422</code>
+      or select a line of a log and get the explanation in a popup.</li>
+  <li><b>ORA Errors</b> tool window: search by code (<code>1403</code>, <code>PLS-306</code>) or by word
+      (<i>mutating</i>, <i>deadlock</i>, <i>snapshot</i>).</li>
+  <li>Practical fixes written for developers: <code>ORA-04091</code> mutating table, <code>ORA-01555</code>
+      snapshot too old, <code>ORA-06502</code> buffer too small, <code>ORA-00942</code> and role grants in
+      PL/SQL, <code>ORA-12899</code> and multi-byte character sets, and more.</li>
+</ul>
+
+<p><b>Free:</b> the 44 most common errors, one code at a time.</p>
+<p><b>Pro</b> (licence or free trial): the full catalogue of 250+ ORA and PLS errors, and explanation of a whole
+stack trace at once (select it or copy it to the clipboard). The entries are written by the author, not copied
+from Oracle documentation.</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="ORA Errors" anchor="right" secondary="true" icon="/icons/oraErrors.svg"
+                    factoryClass="io.github.catalonec1.oraerrors.ide.OraToolWindowFactory"/>
+    </extensions>
+
+    <actions>
+        <action id="OraErrorHelper.Explain" class="io.github.catalonec1.oraerrors.ide.ExplainAction"
+                text="Explain Oracle Error"
+                description="Explain the ORA-/PLS-/TNS- error at the caret, in the selection, or in the clipboard">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ConsoleEditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="OraErrorHelper.OpenCatalog" class="io.github.catalonec1.oraerrors.ide.OpenCatalogAction"
+                text="Open ORA Errors Catalogue"
+                description="Open the ORA Errors tool window">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="OraErrorHelper.Register" class="io.github.catalonec1.oraerrors.ide.RegisterAction"
+                text="ORA Error Helper Pro: Register or Start Trial"
+                description="Unlock the full catalogue and stack-trace explanations">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>

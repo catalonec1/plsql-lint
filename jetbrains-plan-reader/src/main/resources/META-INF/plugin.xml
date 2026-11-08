@@ -1,0 +1,55 @@
+<idea-plugin>
+    <id>io.github.catalonec1.oracle-plan-reader</id>
+    <name>Oracle Plan Reader</name>
+    <vendor url="https://github.com/catalonec1/plsql-lint">catalonec1</vendor>
+
+    <description><![CDATA[
+<p>Reads <b>Oracle execution plans</b> (the text output of <code>DBMS_XPLAN</code>) and points at what to fix.
+Paste a plan from SQL*Plus, SQLcl, SQL Developer, DataGrip or an application log, or select it in any editor or
+console, and get a report: the most expensive step, the problems found, and the plan as an indented tree with the
+cost share of every step. Works offline in every JetBrains IDE; no database connection needed.</p>
+
+<p><b>Free checks</b></p>
+<ul>
+  <li>Most expensive step (self cost share of the total)</li>
+  <li>Full table scans of big row sources</li>
+  <li>Cartesian joins (usually a missing join condition)</li>
+</ul>
+
+<p><b>Pro checks</b> (licence or free trial)</p>
+<ul>
+  <li>Estimated vs actual rows off by 10x or more (<code>ALLSTATS LAST</code> plans)</li>
+  <li>Implicit data type conversion on a column (<code>INTERNAL_FUNCTION</code>, <code>TO_NUMBER("COL")</code>)</li>
+  <li>Functions on columns in filters (<code>TRUNC</code>, <code>UPPER</code>, <code>NVL</code>...) and <code>LIKE '%...'</code></li>
+  <li>Nested loops driven by many rows, FILTER subqueries executed per row</li>
+  <li>No partition pruning (<code>PARTITION RANGE ALL</code>), index skip scans, big index full scans</li>
+  <li>Sorts and hash joins spilling to temp, remote access over database links, big sorts</li>
+  <li>Dynamic statistics and statistics feedback in the Note section</li>
+</ul>
+
+<p>Use <i>Tools | Analyze Oracle Execution Plan</i>, the editor/console context menu, or the
+<b>Plan Reader</b> tool window.</p>
+]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Plan Reader" anchor="bottom" icon="/icons/planReader.svg"
+                    factoryClass="io.github.catalonec1.planreader.ide.PlanToolWindowFactory"/>
+    </extensions>
+
+    <actions>
+        <action id="OraclePlanReader.Analyze" class="io.github.catalonec1.planreader.ide.AnalyzeSelectionAction"
+                text="Analyze Oracle Execution Plan"
+                description="Analyze the DBMS_XPLAN output in the selection, the file or the clipboard">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ConsoleEditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="OraclePlanReader.Register" class="io.github.catalonec1.planreader.ide.RegisterAction"
+                text="Oracle Plan Reader Pro: Register or Start Trial"
+                description="Unlock all execution plan checks">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
