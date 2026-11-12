@@ -1,0 +1,32 @@
+{
+  "name": "ora-error-helper",
+  "displayName": "ORA Error Helper",
+  "description": "Hover any ORA-, PLS- or TNS- error code in SQL, logs or stack traces to see what it means and how to fix it. 250 Oracle errors explained, works offline.",
+  "version": "1.0.0",
+  "publisher": "catalonec",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Other", "Programming Languages"],
+  "keywords": ["oracle", "ora error", "plsql", "pl/sql", "sql", "ora-00001", "ora-01403", "database", "error codes"],
+  "repository": { "type": "git", "url": "https://github.com/catalonec1/plsql-lint" },
+  "homepage": "https://catalonec1.github.io/Gr-dina-de-stele/ora/",
+  "bugs": { "url": "https://github.com/catalonec1/plsql-lint/issues" },
+  "sponsor": { "url": "https://github.com/sponsors/catalonec1" },
+  "main": "./src/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "commands": [
+      { "command": "oraErrors.explain", "title": "Explain error (selection or clipboard)", "category": "ORA Error Helper" },
+      { "command": "oraErrors.browse", "title": "Browse all Oracle errors", "category": "ORA Error Helper" },
+      { "command": "oraErrors.scanFile", "title": "Find error codes in this file", "category": "ORA Error Helper" },
+      { "command": "oraErrors.openReference", "title": "Open online ORA error reference", "category": "ORA Error Helper" },
+      { "command": "oraErrors.openLint", "title": "Get PL/SQL Lint (free linter)", "category": "ORA Error Helper" },
+      { "command": "oraErrors.openPro", "title": "ORA Error Helper for JetBrains IDEs", "category": "ORA Error Helper" }
+    ],
+    "menus": {
+      "editor/context": [{ "command": "oraErrors.explain", "when": "editorHasSelection", "group": "navigation@90" }]
+    }
+  },
+  "scripts": { "test": "node --test test/catalog.test.js" }
+}
