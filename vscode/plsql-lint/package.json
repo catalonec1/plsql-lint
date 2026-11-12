@@ -1,0 +1,41 @@
+{
+  "name": "plsql-lint",
+  "displayName": "PL/SQL Lint",
+  "description": "Oracle SQL and PL/SQL linter: catches WHEN OTHERS THEN NULL, = NULL, COMMIT in loops, SQL injection via EXECUTE IMMEDIATE and 11 more bugs while you type.",
+  "version": "1.0.0",
+  "publisher": "catalonec",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Linters", "Programming Languages"],
+  "keywords": ["plsql", "pl/sql", "oracle", "sql", "linter", "oracle sql", "static analysis"],
+  "repository": { "type": "git", "url": "https://github.com/catalonec1/plsql-lint" },
+  "homepage": "https://github.com/catalonec1/plsql-lint/tree/plsql-lint/vscode/plsql-lint",
+  "bugs": { "url": "https://github.com/catalonec1/plsql-lint/issues" },
+  "sponsor": { "url": "https://github.com/sponsors/catalonec1" },
+  "main": "./src/extension.js",
+  "activationEvents": ["onLanguage:plsql", "onLanguage:oraclesql", "onLanguage:sql", "onLanguage:oracle-sql"],
+  "contributes": {
+    "languages": [{
+      "id": "plsql",
+      "aliases": ["PL/SQL", "plsql"],
+      "extensions": [".pks", ".pkb", ".pls", ".plb", ".pck", ".prc", ".fnc", ".trg", ".tps", ".tpb"]
+    }],
+    "commands": [
+      { "command": "plsqlLint.lintFile", "title": "Lint current file", "category": "PL/SQL Lint" },
+      { "command": "plsqlLint.openPro", "title": "Get 5 extra Pro rules (JetBrains plugin)", "category": "PL/SQL Lint" },
+      { "command": "plsqlLint.openOraReference", "title": "Open ORA error reference", "category": "PL/SQL Lint" },
+      { "command": "plsqlLint.openBook", "title": "PL/SQL in Practice (Kindle book)", "category": "PL/SQL Lint" }
+    ],
+    "configuration": {
+      "title": "PL/SQL Lint",
+      "properties": {
+        "plsqlLint.enable": { "type": "boolean", "default": true, "description": "Lint SQL and PL/SQL files." },
+        "plsqlLint.ignore": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Rule codes to turn off, e.g. [\"PLL006\"]." },
+        "plsqlLint.checkLineLength": { "type": "boolean", "default": false, "description": "Enable PLL009 (line too long)." },
+        "plsqlLint.maxLineLength": { "type": "number", "default": 120, "description": "Maximum line length for PLL009." }
+      }
+    }
+  },
+  "scripts": { "test": "node --test test/core.test.js" }
+}

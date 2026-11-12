@@ -1,0 +1,22 @@
+name: VS Code extensions
+on:
+  push:
+    paths: ['vscode/**', '.github/workflows/vscode-extensions.yml']
+  pull_request:
+    paths: ['vscode/**', '.github/workflows/vscode-extensions.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node --test vscode/plsql-lint/test/core.test.js vscode/ora-error-helper/test/catalog.test.js
+      - run: node vscode/test-smoke/smoke.js
+      - run: |
+          mkdir -p vscode/dist
+          for d in plsql-lint ora-error-helper; do
+            (cd vscode/$d && npx -y @vscode/vsce@3 package --no-dependencies -o "$GITHUB_WORKSPACE/vscode/dist/$d-ci.vsix")
+          done
+      - uses: actions/upload-artifact@v4
+        with: { name: vscode-extensions, path: vscode/dist/*-ci.vsix }
