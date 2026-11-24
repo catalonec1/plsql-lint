@@ -143,7 +143,22 @@ public class CheckLicense {
       // createEvent + performActionDumbAwareWithCallbacks: 2024.3 (243) and newer, no deprecated API.
       AnActionEvent event = AnActionEvent.createEvent(asDataContext(productCode, message),
           registerAction.getTemplatePresentation().clone(), "", ActionUiKind.NONE, null);
-      ActionUtil.performActionDumbAwareWithCallbacks(registerAction, event);
+      performAction(registerAction, event);
+    }
+  }
+
+  // ActionUtil.performAction (2025.1+) replaces performActionDumbAwareWithCallbacks, which is deprecated there.
+  // Resolve whichever exists at runtime so one build works on 2024.3 and on current IDEs.
+  private static void performAction(AnAction action, AnActionEvent event) {
+    for (String name : new String[]{"performAction", "performActionDumbAwareWithCallbacks"}) {
+      try {
+        ActionUtil.class.getMethod(name, AnAction.class, AnActionEvent.class).invoke(null, action, event);
+        return;
+      } catch (NoSuchMethodException ignored) {
+        // try the next one
+      } catch (ReflectiveOperationException e) {
+        throw new IllegalStateException(e);
+      }
     }
   }
 
