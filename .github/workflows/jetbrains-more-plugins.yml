@@ -1,0 +1,48 @@
+name: JetBrains plugins (ORA Error Helper, Oracle Plan Reader)
+on:
+  push:
+    paths: ["jetbrains-ora-errors/**", "jetbrains-plan-reader/**", ".github/workflows/jetbrains-more-plugins.yml"]
+  pull_request:
+    paths: ["jetbrains-ora-errors/**", "jetbrains-plan-reader/**", ".github/workflows/jetbrains-more-plugins.yml"]
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [jetbrains-ora-errors, jetbrains-plan-reader]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Free disk space for the IDE downloads
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc || true
+      - name: Core tests
+        run: ./gradlew -p core test
+      - name: Build plugin
+        run: ./gradlew buildPlugin
+      - name: Verify plugin (IntelliJ IDEA 2024.3, DataGrip 2025.2)
+        run: ./gradlew verifyPlugin
+      - name: Print plugin zip (base64) for environments that cannot download artifacts
+        run: |
+          f=$(ls build/distributions/*.zip)
+          sha256sum "$f"
+          echo "BEGIN-PLUGIN-ZIP $(basename "$f")"
+          base64 -w 2000 "$f"
+          echo "END-PLUGIN-ZIP"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.plugin }}-zip
+          path: ${{ matrix.plugin }}/build/distributions/*.zip
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: ${{ matrix.plugin }}-verifier-report
+          path: ${{ matrix.plugin }}/build/reports/pluginVerifier

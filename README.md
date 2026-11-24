@@ -67,6 +67,10 @@ Exit codes: `0` no findings, `1` findings, `2` usage or I/O error. Use `--exit-z
 | PLL009 | info | line-too-long | Lines longer than `--max-line-length` (default 120). Opt-in. |
 | PLL010 | error | raise-app-error-range | `RAISE_APPLICATION_ERROR` number outside -20000..-20999. |
 | PLL011 | info | end-without-name | `END;` closing a `CREATE PROCEDURE/FUNCTION/PACKAGE/TRIGGER` instead of `END name;`. |
+| PLL012 | error | compare-with-empty-string | `x = ''`, `x <> ''`: Oracle stores `''` as NULL, so the test is never true. |
+| PLL013 | info | varchar-type | `VARCHAR` instead of `VARCHAR2`. |
+| PLL014 | warning | not-in-subquery | `NOT IN (SELECT ...)`: one NULL in the subquery and no row matches; use `NOT EXISTS`. |
+| PLL015 | warning | to-date-no-format | `TO_DATE(x)` / `TO_TIMESTAMP(x)` without a format mask (depends on NLS settings). |
 
 ## Suppressing findings
 

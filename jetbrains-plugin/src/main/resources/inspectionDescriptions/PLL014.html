@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>NOT IN (SELECT ...) returns no rows when the subquery yields a NULL; prefer NOT EXISTS.</p>
+
+<p>Example:</p>
+<pre><code>WHERE id NOT IN (SELECT parent_id FROM t)</code></pre>
+<p>Better:</p>
+<pre><code>WHERE NOT EXISTS (SELECT 1 FROM t WHERE t.parent_id = x.id)</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL014</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL014</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

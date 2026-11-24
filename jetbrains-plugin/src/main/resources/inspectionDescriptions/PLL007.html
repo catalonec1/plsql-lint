@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>GOTO makes control flow hard to follow.</p>
+
+<p>Example:</p>
+<pre><code>GOTO skip;</code></pre>
+<p>Better:</p>
+<pre><code>CONTINUE; -- or EXIT / a procedure</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL007</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL007</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

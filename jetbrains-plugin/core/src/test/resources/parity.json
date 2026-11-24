@@ -1,0 +1,667 @@
+[
+{
+"source": "BEGIN x; EXCEPTION WHEN OTHERS THEN NULL; END;",
+"findings": [
+[
+1,
+20,
+"PLL001",
+"error"
+]
+]
+},
+{
+"source": "BEGIN x; EXCEPTION WHEN OTHERS THEN log_it(SQLERRM); END;",
+"findings": [
+[
+1,
+20,
+"PLL001",
+"warning"
+]
+]
+},
+{
+"source": "BEGIN x; EXCEPTION WHEN OTHERS THEN log_it; RAISE; END;",
+"findings": []
+},
+{
+"source": "BEGIN x; EXCEPTION WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20001, 'x'); END;",
+"findings": []
+},
+{
+"source": "BEGIN x;\n    EXCEPTION\n      WHEN OTHERS THEN\n        IF a = 1 THEN log_it; END IF;\n        CASE WHEN b = 1 THEN y; END CASE;\n        RAISE;\n    END;",
+"findings": []
+},
+{
+"source": "BEGIN x; EXCEPTION WHEN OTHERS THEN log_it; WHEN NO_DATA_FOUND THEN RAISE; END;",
+"findings": [
+[
+1,
+20,
+"PLL001",
+"warning"
+]
+]
+},
+{
+"source": "SELECT * FROM t;",
+"findings": [
+[
+1,
+8,
+"PLL002",
+"warning"
+]
+]
+},
+{
+"source": "SELECT DISTINCT * FROM t;",
+"findings": [
+[
+1,
+17,
+"PLL002",
+"warning"
+]
+]
+},
+{
+"source": "SELECT a, b FROM t;",
+"findings": []
+},
+{
+"source": "SELECT COUNT(*) FROM t;",
+"findings": []
+},
+{
+"source": "SELECT a FROM t WHERE EXISTS (SELECT * FROM u WHERE u.id = t.id);",
+"findings": []
+},
+{
+"source": "BEGIN FOR r IN c LOOP COMMIT; END LOOP; END;",
+"findings": [
+[
+1,
+23,
+"PLL003",
+"warning"
+]
+]
+},
+{
+"source": "BEGIN WHILE x LOOP ROLLBACK; END LOOP; END;",
+"findings": [
+[
+1,
+20,
+"PLL003",
+"warning"
+]
+]
+},
+{
+"source": "BEGIN FOR r IN c LOOP x; END LOOP; COMMIT; END;",
+"findings": []
+},
+{
+"source": "CREATE GLOBAL TEMPORARY TABLE t (a NUMBER) ON COMMIT DELETE ROWS;",
+"findings": []
+},
+{
+"source": "SELECT a FROM t WHERE b = NULL;",
+"findings": [
+[
+1,
+25,
+"PLL004",
+"error"
+]
+]
+},
+{
+"source": "SELECT a FROM t WHERE b <> NULL;",
+"findings": [
+[
+1,
+25,
+"PLL004",
+"error"
+]
+]
+},
+{
+"source": "SELECT a FROM t WHERE b != NULL;",
+"findings": [
+[
+1,
+25,
+"PLL004",
+"error"
+]
+]
+},
+{
+"source": "SELECT a FROM t WHERE b ^= NULL;",
+"findings": [
+[
+1,
+25,
+"PLL004",
+"error"
+]
+]
+},
+{
+"source": "BEGIN IF NULL = x THEN y; END IF; END;",
+"findings": [
+[
+1,
+15,
+"PLL004",
+"error"
+]
+]
+},
+{
+"source": "UPDATE t SET a = NULL, b = NULL WHERE c IS NULL;",
+"findings": []
+},
+{
+"source": "BEGIN x := NULL; END;",
+"findings": []
+},
+{
+"source": "UPDATE t SET a = (SELECT b FROM u WHERE c = NULL);",
+"findings": [
+[
+1,
+43,
+"PLL004",
+"error"
+]
+]
+},
+{
+"source": "BEGIN EXECUTE IMMEDIATE 'DROP TABLE ' || t; END;",
+"findings": [
+[
+1,
+7,
+"PLL005",
+"warning"
+]
+]
+},
+{
+"source": "BEGIN EXECUTE IMMEDIATE l_sql USING a; END;",
+"findings": []
+},
+{
+"source": "BEGIN EXECUTE IMMEDIATE 'x' INTO v USING a || b; END;",
+"findings": []
+},
+{
+"source": "BEGIN EXECUTE IMMEDIATE 'DROP TABLE ' || DBMS_ASSERT.SQL_OBJECT_NAME(t); END;",
+"findings": []
+},
+{
+"source": "BEGIN OPEN c FOR 'SELECT a FROM ' || t; END;",
+"findings": [
+[
+1,
+14,
+"PLL005",
+"warning"
+]
+]
+},
+{
+"source": "BEGIN OPEN c FOR SELECT a || b FROM t; END;",
+"findings": []
+},
+{
+"source": "BEGIN DBMS_OUTPUT.PUT_LINE('x'); END;",
+"findings": [
+[
+1,
+7,
+"PLL006",
+"info"
+]
+]
+},
+{
+"source": "BEGIN GOTO done; <<done>> NULL; END;",
+"findings": [
+[
+1,
+7,
+"PLL007",
+"warning"
+]
+]
+},
+{
+"source": "SELECT a FROM t WHERE ROWNUM <= 10 ORDER BY a;",
+"findings": [
+[
+1,
+23,
+"PLL008",
+"warning"
+]
+]
+},
+{
+"source": "SELECT a FROM (SELECT a FROM t ORDER BY a) WHERE ROWNUM <= 10;",
+"findings": []
+},
+{
+"source": "SELECT a FROM t ORDER BY a FETCH FIRST 10 ROWS ONLY;",
+"findings": []
+},
+{
+"source": "-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+"findings": [
+[
+1,
+121,
+"PLL009",
+"info"
+]
+]
+},
+{
+"source": "BEGIN RAISE_APPLICATION_ERROR(-20001, 'ok'); RAISE; END;",
+"findings": []
+},
+{
+"source": "BEGIN RAISE_APPLICATION_ERROR(-1, 'bad'); END;",
+"findings": [
+[
+1,
+32,
+"PLL010",
+"error"
+]
+]
+},
+{
+"source": "BEGIN RAISE_APPLICATION_ERROR(20001, 'bad'); END;",
+"findings": [
+[
+1,
+31,
+"PLL010",
+"error"
+]
+]
+},
+{
+"source": "CREATE OR REPLACE PROCEDURE p IS BEGIN x; END;\n/\n",
+"findings": [
+[
+1,
+43,
+"PLL011",
+"info"
+]
+]
+},
+{
+"source": "CREATE OR REPLACE PROCEDURE p IS BEGIN x; END p;\n/\n",
+"findings": []
+},
+{
+"source": "BEGIN\n      v := 'SELECT * FROM t WHERE a = NULL'; -- COMMIT; GOTO x\n      /* WHEN OTHERS THEN NULL; */\n      v := q'{DBMS_OUTPUT.PUT_LINE('x')}';\n    END;",
+"findings": []
+},
+{
+"source": "SELECT * FROM t; -- plsql-lint: disable=PLL002",
+"findings": []
+},
+{
+"source": "SELECT * FROM t; -- noqa",
+"findings": []
+},
+{
+"source": "SELECT * FROM t; -- noqa: PLL007",
+"findings": [
+[
+1,
+8,
+"PLL002",
+"warning"
+]
+]
+},
+{
+"source": "-- plsql-lint: disable-file=PLL002\nSELECT * FROM t;\nSELECT * FROM u;",
+"findings": []
+},
+{
+"source": "BEGIN DBMS_OUTPUT.PUT_LINE('x'); GOTO a; END;",
+"findings": [
+[
+1,
+7,
+"PLL006",
+"info"
+],
+[
+1,
+34,
+"PLL007",
+"warning"
+]
+]
+},
+{
+"source": "CREATE OR REPLACE PROCEDURE load_orders (p_id IN orders.id%TYPE) IS\n  -- SELECT * and = NULL inside comments are ignored\n  v_note VARCHAR2(100) := 'WHEN OTHERS THEN NULL; SELECT * FROM x';\nBEGIN\n  UPDATE orders SET processed = NULL WHERE id = p_id AND status IS NULL;\n  IF EXISTS_FLAG = 'Y' THEN\n    NULL;\n  END IF;\n  EXECUTE IMMEDIATE 'DELETE FROM orders WHERE id = :id' USING p_id;\n  COMMIT;\nEXCEPTION\n  WHEN NO_DATA_FOUND THEN\n    NULL;\n  WHEN OTHERS THEN\n    log_error(SQLERRM);\n    RAISE;\nEND load_orders;\n/\n",
+"findings": []
+},
+{
+"source": "CREATE OR REPLACE PROCEDURE load_orders IS\n  v_cnt NUMBER;\nBEGIN\n  FOR r IN (SELECT * FROM orders WHERE status = NULL) LOOP\n    UPDATE orders SET processed = NULL WHERE id = r.id;\n    COMMIT;\n  END LOOP;\n  EXECUTE IMMEDIATE 'DELETE FROM ' || p_table || ' WHERE id = ' || p_id;\n  DBMS_OUTPUT.PUT_LINE('done');\n  RAISE_APPLICATION_ERROR(-1234, 'bad');\nEXCEPTION\n  WHEN OTHERS THEN\n    NULL;\nEND;\n/\n",
+"findings": [
+[
+4,
+20,
+"PLL002",
+"warning"
+],
+[
+4,
+47,
+"PLL004",
+"error"
+],
+[
+6,
+5,
+"PLL003",
+"warning"
+],
+[
+8,
+3,
+"PLL005",
+"warning"
+],
+[
+9,
+3,
+"PLL006",
+"info"
+],
+[
+10,
+28,
+"PLL010",
+"error"
+],
+[
+12,
+3,
+"PLL001",
+"error"
+],
+[
+14,
+1,
+"PLL011",
+"info"
+]
+]
+},
+{
+"source": "SELECT * FROM t;\n",
+"findings": [
+[
+1,
+8,
+"PLL002",
+"warning"
+]
+]
+},
+{
+"source": "-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\nSELECT * FROM t;\n",
+"findings": [
+[
+1,
+121,
+"PLL009",
+"info"
+],
+[
+2,
+8,
+"PLL002",
+"warning"
+]
+]
+},
+{
+"source": "BEGIN IF x = '' THEN y; END IF; END;",
+"findings": [
+[
+1,
+12,
+"PLL012",
+"error"
+]
+]
+},
+{
+"source": "SELECT a FROM t WHERE b <> '';",
+"findings": [
+[
+1,
+25,
+"PLL012",
+"error"
+]
+]
+},
+{
+"source": "UPDATE t SET b = '' WHERE id = 1;",
+"findings": []
+},
+{
+"source": "BEGIN IF x = 'a' THEN y; END IF; END;",
+"findings": []
+},
+{
+"source": "DECLARE v VARCHAR(10); BEGIN NULL; END;",
+"findings": [
+[
+1,
+11,
+"PLL013",
+"info"
+]
+]
+},
+{
+"source": "DECLARE v VARCHAR2(10); BEGIN NULL; END;",
+"findings": []
+},
+{
+"source": "SELECT 'VARCHAR(10)' AS s FROM dual;",
+"findings": []
+},
+{
+"source": "SELECT a FROM t WHERE id NOT IN (SELECT pid FROM p);",
+"findings": [
+[
+1,
+26,
+"PLL014",
+"warning"
+]
+]
+},
+{
+"source": "SELECT a FROM t WHERE id NOT IN (1, 2);",
+"findings": []
+},
+{
+"source": "SELECT a FROM t WHERE NOT EXISTS (SELECT 1 FROM p WHERE p.id = t.id);",
+"findings": []
+},
+{
+"source": "SELECT TO_DATE(s) FROM t;",
+"findings": [
+[
+1,
+8,
+"PLL015",
+"warning"
+]
+]
+},
+{
+"source": "SELECT TO_DATE(SUBSTR(s, 1, 10)) FROM t;",
+"findings": [
+[
+1,
+8,
+"PLL015",
+"warning"
+]
+]
+},
+{
+"source": "SELECT TO_DATE(s, 'YYYY-MM-DD') FROM t;",
+"findings": []
+},
+{
+"source": "SELECT TO_TIMESTAMP(SUBSTR(s, 1, 10), 'YYYY-MM-DD') FROM t;",
+"findings": []
+},
+{
+"source": "declare\n  v varchar(10);\n  cursor c is select * from emp;\nbegin\n  for rec in c loop\n    insert into emp_hist values rec;\n    goto done;\n  end loop;\n  for i in reverse 1..10 loop\n    update t set x = i where id = i;\n  end loop;\n  <<done>>\n  while v is null loop\n    commit;\n  end loop;\n  open rc for 'select * from ' || v;\n  select count(1) into n from dual where exists (select * from t);\n  if n = 0 then null; end if;\nexception when others then raise;\nend;\n/\n",
+"findings": [
+[
+2,
+5,
+"PLL013",
+"info"
+],
+[
+3,
+22,
+"PLL002",
+"warning"
+],
+[
+7,
+5,
+"PLL007",
+"warning"
+],
+[
+14,
+5,
+"PLL003",
+"warning"
+],
+[
+16,
+11,
+"PLL005",
+"warning"
+]
+]
+},
+{
+"source": "CREATE OR REPLACE PACKAGE BODY app.pkg_orders AS\n  -- plsql-lint parity corpus: realistic package body\n  c_max CONSTANT PLS_INTEGER := 100;\n\n  PROCEDURE log_error(p_msg IN VARCHAR) IS\n    PRAGMA AUTONOMOUS_TRANSACTION;\n  BEGIN\n    INSERT INTO app_log (ts, msg) VALUES (SYSTIMESTAMP, p_msg);\n  END log_error;\n\n  PROCEDURE log_ok(p_msg IN VARCHAR2) IS\n    PRAGMA AUTONOMOUS_TRANSACTION;\n  BEGIN\n    INSERT INTO app_log (ts, msg) VALUES (SYSTIMESTAMP, p_msg);\n    COMMIT;\n  END log_ok;\n\n  FUNCTION has_orders(p_cust IN NUMBER) RETURN BOOLEAN IS\n    l_cnt NUMBER;\n  BEGIN\n    SELECT COUNT(*) INTO l_cnt FROM orders WHERE customer_id = p_cust;\n    RETURN l_cnt > 0;\n  END has_orders;\n\n  PROCEDURE close_old IS\n  BEGIN\n    FOR r IN (SELECT id FROM orders WHERE status = 'OPEN' AND created < SYSDATE - 30) LOOP\n      UPDATE orders SET status = 'CLOSED', closed_by = NULL WHERE id = r.id;\n      COMMIT;\n    END LOOP;\n    FOR i IN 1 .. c_max LOOP\n      DELETE FROM tmp_ids WHERE id = i;\n    END LOOP;\n  EXCEPTION\n    WHEN OTHERS THEN\n      log_error(SQLERRM);\n  END close_old;\n\n  PROCEDURE purge IS\n  BEGIN\n    DELETE FROM tmp_ids;\n    UPDATE orders o SET o.flag = 'N';\n    MERGE INTO t USING s ON (t.id = s.id) WHEN MATCHED THEN UPDATE SET t.v = s.v;\n    IF l_x = NULL OR l_y <> '' THEN\n      dbms_output.put_line('x');\n    END IF;\n    EXECUTE IMMEDIATE 'DELETE FROM ' || p_tab || ' WHERE id = :1' USING p_id;\n    SELECT * INTO l_row FROM orders WHERE ROWNUM = 1 ORDER BY created;\n    l_d := TO_DATE(p_txt);\n    RAISE_APPLICATION_ERROR(-30001, 'bad');\n  EXCEPTION\n    WHEN NO_DATA_FOUND THEN NULL;\n    WHEN OTHERS THEN NULL;\n  END;\nEND;\n/\nCREATE USER demo IDENTIFIED BY \"Secret123\";\nCREATE DATABASE LINK remote CONNECT TO scott IDENTIFIED BY tiger USING 'orcl';\nCREATE OR REPLACE TRIGGER trg_orders BEFORE INSERT OR UPDATE OF status OR DELETE ON orders FOR EACH ROW\nBEGIN\n  IF :new.status NOT IN (SELECT code FROM statuses) THEN NULL; END IF;\nEND;\n/\nGRANT SELECT, UPDATE, DELETE ON orders TO app_user;\nALTER TABLE child ADD CONSTRAINT fk FOREIGN KEY (pid) REFERENCES parent (id) ON DELETE CASCADE;\nSELECT id FROM orders FOR UPDATE;\n",
+"findings": [
+[
+29,
+7,
+"PLL003",
+"warning"
+],
+[
+35,
+5,
+"PLL001",
+"warning"
+],
+[
+44,
+12,
+"PLL004",
+"error"
+],
+[
+44,
+26,
+"PLL012",
+"error"
+],
+[
+45,
+7,
+"PLL006",
+"info"
+],
+[
+47,
+5,
+"PLL005",
+"warning"
+],
+[
+48,
+12,
+"PLL002",
+"warning"
+],
+[
+48,
+43,
+"PLL008",
+"warning"
+],
+[
+49,
+12,
+"PLL015",
+"warning"
+],
+[
+50,
+30,
+"PLL010",
+"error"
+],
+[
+53,
+5,
+"PLL001",
+"error"
+],
+[
+55,
+1,
+"PLL011",
+"info"
+],
+[
+61,
+18,
+"PLL014",
+"warning"
+],
+[
+62,
+1,
+"PLL011",
+"info"
+]
+]
+}
+]

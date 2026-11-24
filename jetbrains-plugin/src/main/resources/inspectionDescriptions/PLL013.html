@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>VARCHAR declared instead of VARCHAR2 (Oracle reserves VARCHAR for future semantics).</p>
+
+<p>Example:</p>
+<pre><code>l_code VARCHAR(10);</code></pre>
+<p>Better:</p>
+<pre><code>l_code VARCHAR2(10);</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL013</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL013</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

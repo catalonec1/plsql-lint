@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>UPDATE or DELETE without a WHERE clause changes every row.</p>
+<p><b>Pro check.</b> Requires a PL/SQL Lint Pro licence or the free trial; without it this inspection reports nothing.</p>
+<p>Example:</p>
+<pre><code>DELETE FROM orders;</code></pre>
+<p>Better:</p>
+<pre><code>DELETE FROM orders WHERE created &lt; ADD_MONTHS(SYSDATE, -24);</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL020</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL020</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

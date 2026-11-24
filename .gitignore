@@ -5,3 +5,6 @@ __pycache__/
 .venv/
 build/
 dist/
+jetbrains-plugin/**/build/
+jetbrains-plugin/**/.gradle/
+jetbrains-plugin/.intellijPlatform/

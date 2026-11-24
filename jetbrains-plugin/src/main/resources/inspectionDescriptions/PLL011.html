@@ -1,0 +1,21 @@
+<html>
+<body>
+<p>Named END without the unit name (END; instead of END my_proc;).</p>
+
+<p>Example:</p>
+<pre><code>CREATE OR REPLACE PROCEDURE do_it IS
+BEGIN
+  NULL;
+END;
+/</code></pre>
+<p>Better:</p>
+<pre><code>CREATE OR REPLACE PROCEDURE do_it IS
+BEGIN
+  NULL;
+END do_it;
+/</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL011</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL011</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

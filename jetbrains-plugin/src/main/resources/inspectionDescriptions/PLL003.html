@@ -1,0 +1,19 @@
+<html>
+<body>
+<p>COMMIT or ROLLBACK inside a loop (slow, breaks atomicity, ORA-01555 risk).</p>
+
+<p>Example:</p>
+<pre><code>FOR r IN c LOOP
+  UPDATE t SET x = r.x WHERE id = r.id;
+  COMMIT;
+END LOOP;</code></pre>
+<p>Better:</p>
+<pre><code>FOR r IN c LOOP
+  UPDATE t SET x = r.x WHERE id = r.id;
+END LOOP;
+COMMIT;</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL003</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL003</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

@@ -1,0 +1,22 @@
+<html>
+<body>
+<p>AUTONOMOUS_TRANSACTION unit with DML but no COMMIT/ROLLBACK (ORA-06519).</p>
+<p><b>Pro check.</b> Requires a PL/SQL Lint Pro licence or the free trial; without it this inspection reports nothing.</p>
+<p>Example:</p>
+<pre><code>PROCEDURE log_it(p VARCHAR2) IS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  INSERT INTO app_log VALUES (SYSTIMESTAMP, p);
+END;</code></pre>
+<p>Better:</p>
+<pre><code>PROCEDURE log_it(p VARCHAR2) IS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  INSERT INTO app_log VALUES (SYSTIMESTAMP, p);
+  COMMIT;
+END;</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL018</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL018</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

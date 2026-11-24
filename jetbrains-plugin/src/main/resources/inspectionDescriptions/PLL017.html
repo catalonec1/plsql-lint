@@ -1,0 +1,16 @@
+<html>
+<body>
+<p>INSERT/UPDATE/DELETE/MERGE inside a cursor FOR loop (slow-by-slow); use BULK COLLECT + FORALL.</p>
+<p><b>Pro check.</b> Requires a PL/SQL Lint Pro licence or the free trial; without it this inspection reports nothing.</p>
+<p>Example:</p>
+<pre><code>FOR r IN (SELECT id FROM orders WHERE status = &#x27;OPEN&#x27;) LOOP
+  UPDATE orders SET status = &#x27;CLOSED&#x27; WHERE id = r.id;
+END LOOP;</code></pre>
+<p>Better:</p>
+<pre><code>UPDATE orders SET status = &#x27;CLOSED&#x27; WHERE status = &#x27;OPEN&#x27;;
+-- or BULK COLLECT ... LIMIT 1000 + FORALL</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL017</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL017</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>

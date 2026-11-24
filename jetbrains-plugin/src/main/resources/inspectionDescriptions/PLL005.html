@@ -1,0 +1,13 @@
+<html>
+<body>
+<p>Dynamic SQL built by concatenation (SQL injection risk, no plan reuse).</p>
+
+<p>Example:</p>
+<pre><code>EXECUTE IMMEDIATE &#x27;DELETE FROM t WHERE id = &#x27; || p_id;</code></pre>
+<p>Better:</p>
+<pre><code>EXECUTE IMMEDIATE &#x27;DELETE FROM t WHERE id = :1&#x27; USING p_id;</code></pre>
+<p>Suppress on one line with <code>-- noqa: PLL005</code>, or for a whole file with <code>-- plsql-lint: disable-file=PLL005</code>
+(the same comments work with the <code>plsql-lint</code> command-line tool).</p>
+<!-- tooltip end -->
+</body>
+</html>
