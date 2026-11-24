@@ -10,7 +10,7 @@ Catches the Oracle SQL and PL/SQL mistakes that compile fine but break in produc
 | PLL002 | `SELECT *` (allowed inside `EXISTS`) |
 | PLL003 | `COMMIT` / `ROLLBACK` inside a loop |
 | PLL004 | `= NULL` / `<> NULL`, which are never true |
-| PLL005 | Dynamic SQL built with `\|\|` in `EXECUTE IMMEDIATE` / `OPEN FOR` (SQL injection) |
+| PLL005 | Dynamic SQL built with <code>&#124;&#124;</code> in `EXECUTE IMMEDIATE` / `OPEN FOR` (SQL injection) |
 | PLL006 | `DBMS_OUTPUT` left in code |
 | PLL007 | `GOTO` |
 | PLL008 | `ROWNUM` filter together with `ORDER BY` in the same query |

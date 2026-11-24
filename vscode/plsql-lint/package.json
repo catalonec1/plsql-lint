@@ -2,7 +2,7 @@
   "name": "plsql-lint",
   "displayName": "PL/SQL Lint",
   "description": "Oracle SQL and PL/SQL linter: catches WHEN OTHERS THEN NULL, = NULL, COMMIT in loops, SQL injection via EXECUTE IMMEDIATE and 11 more bugs while you type.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "catalonec",
   "license": "MIT",
   "icon": "images/icon.png",
