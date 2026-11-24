@@ -140,9 +140,10 @@ public class CheckLicense {
       registerAction = actionManager.getAction("Register");
     }
     if (registerAction != null) {
-      // invokeAction works on 2024.3 (243) and newer.
-      // For older IDE versions, use: registerAction.actionPerformed(AnActionEvent.createFromDataContext("", new Presentation(), asDataContext(productCode, message)))
-      ActionUtil.invokeAction(registerAction, asDataContext(productCode, message), "", null, null);
+      // createEvent + performActionDumbAwareWithCallbacks: 2024.3 (243) and newer, no deprecated API.
+      AnActionEvent event = AnActionEvent.createEvent(asDataContext(productCode, message),
+          registerAction.getTemplatePresentation().clone(), "", ActionUiKind.NONE, null);
+      ActionUtil.performActionDumbAwareWithCallbacks(registerAction, event);
     }
   }
 
@@ -152,15 +153,13 @@ public class CheckLicense {
   // - message: optional message explaining the reason why the dialog has been shown
   @NotNull
   private static DataContext asDataContext(final String productCode, @Nullable String message) {
-    return dataId -> switch (dataId) {
-        // the same code as registered in plugin.xml, 'product-descriptor' tag
-        case "register.product-descriptor.code" -> productCode;
-
-        // optional message to be shown in the registration dialog that appears
-        case "register.message" -> message;
-        default -> null;
-    };
+    // the same code as registered in plugin.xml, 'product-descriptor' tag; message is optional
+    return com.intellij.openapi.actionSystem.impl.SimpleDataContext.builder()
+        .add(DataKey.create("register.product-descriptor.code"), productCode)
+        .add(DataKey.create("register.message"), message)
+        .build();
   }
+
 
   private static boolean isKeyValid(String key) {
     String[] licenseParts = key.split("-");

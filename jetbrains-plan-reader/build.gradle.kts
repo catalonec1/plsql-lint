@@ -53,6 +53,7 @@ intellijPlatform {
             untilBuild = provider { null }
         }
         changeNotes = """
+            <p>1.0.1: Pro registration dialog opens through the current IntelliJ action API (no deprecated calls, ready for 2026.3).</p>
             <p>1.0.0: first release. DBMS_XPLAN parser, 15 checks (3 free), Plan Reader tool window.</p>
         """.trimIndent()
     }
