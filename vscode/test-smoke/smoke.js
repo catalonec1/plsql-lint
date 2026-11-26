@@ -20,12 +20,15 @@ const vscode = {
   languages: {
     createDiagnosticCollection: () => ({ set: (u, d) => reg.diags.set(u.toString(), d), delete: () => {}, dispose() {} }),
     registerCodeActionsProvider: (s, p) => (reg.actions = p),
-    registerHoverProvider: (s, p) => (reg.hover = p)
+    registerHoverProvider: (s, p) => (reg.hover = p),
+    registerDocumentLinkProvider: (s, p) => (reg.links = p)
   },
   workspace: { getConfiguration: () => ({ get: (k, d) => d }), onDidOpenTextDocument: () => {}, onDidChangeTextDocument: () => {},
     onDidCloseTextDocument: () => {}, onDidChangeConfiguration: () => {}, textDocuments: [] },
   commands: { registerCommand: (n, f) => (reg.cmds[n] = f), executeCommand: () => {} },
-  window: {}, env: { openExternal: () => {} }
+  DocumentLink: class { constructor(r, t) { this.range = r; this.target = t; } }, StatusBarAlignment: { Right: 2 },
+  window: { createStatusBarItem: () => (reg.bar = { show() { this.shown = true; }, hide() { this.shown = false; }, dispose() {} }), onDidChangeActiveTextEditor: () => {},
+    registerTerminalLinkProvider: p => (reg.term = p), createWebviewPanel: (id, title) => (reg.panel = { title, webview: {} }) }, env: { openExternal: () => {} }
 };
 const orig = Module._load;
 Module._load = function (req, ...a) { return req === 'vscode' ? vscode : orig.call(this, req, ...a); };
@@ -47,4 +50,11 @@ const h = reg.hover.provideHover(doc('java.sql.SQLException: ORA-00942: table or
 assert.ok(h.contents.value.includes('ORA-00942') && h.contents.value.includes('/ora/ORA-00942/'));
 assert.strictEqual(reg.hover.provideHover(doc('no codes here', 'log'), { line: 0, character: 3 }), undefined);
 for (const c of ['oraErrors.explain', 'oraErrors.browse', 'oraErrors.scanFile', 'oraErrors.openReference']) assert.ok(reg.cmds[c], c);
+const links = reg.links.provideDocumentLinks(doc('x\nfailed: ORA-01403 and PLS-00201 and ORA-99999', 'log'));
+assert.deepStrictEqual(links.map(l => l.range.start.character), [8, 22]);
+assert.ok(decodeURIComponent(links[0].target).includes('oraErrors.show?["ORA-01403"]'));
+const tl = reg.term.provideTerminalLinks({ line: 'ERROR at line 1: ORA-00942: table or view does not exist' });
+assert.strictEqual(tl.length, 1); assert.strictEqual(tl[0].startIndex, 17);
+reg.term.handleTerminalLink(tl[0]); assert.strictEqual(reg.panel.title, 'ORA-00942');
+reg.cmds['oraErrors.show']('ORA-01403'); assert.strictEqual(reg.panel.title, 'ORA-01403');
 console.log('smoke ok');

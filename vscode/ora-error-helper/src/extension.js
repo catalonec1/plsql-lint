@@ -32,9 +32,54 @@ function activate(context) {
     qp.show();
   };
 
+  const cfg = () => vscode.workspace.getConfiguration('oraErrors');
+  const SELECTOR = [{ scheme: 'file' }, { scheme: 'untitled' }, { scheme: 'output' }, { scheme: 'vscode-notebook-cell' }];
+
+  // Status bar: shows the error codes found in the active editor; click to list them.
+  const bar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
+  bar.command = 'oraErrors.scanFile';
+  const updateBar = () => {
+    const ed = vscode.window.activeTextEditor;
+    if (!ed || !cfg().get('statusBar', true) || ed.document.lineCount > 20000) return bar.hide();
+    const n = scan(ed.document.getText()).length;
+    if (!n) return bar.hide();
+    bar.text = `$(error) ${n} ORA`; bar.tooltip = `${n} Oracle error code(s) in this file. Click to list them.`; bar.show();
+  };
+  let barT;
+  const later = () => { clearTimeout(barT); barT = setTimeout(updateBar, 400); };
+
   context.subscriptions.push(
-    vscode.languages.registerHoverProvider([{ scheme: 'file' }, { scheme: 'untitled' }, { scheme: 'output' }, { scheme: 'vscode-notebook-cell' }], {
+    bar,
+    vscode.window.onDidChangeActiveTextEditor(updateBar),
+    vscode.workspace.onDidChangeTextDocument(e => { if (vscode.window.activeTextEditor && e.document === vscode.window.activeTextEditor.document) later(); }),
+    vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('oraErrors')) updateBar(); }),
+    // Ctrl+click on a code in a file opens its explanation.
+    vscode.languages.registerDocumentLinkProvider(SELECTOR, {
+      provideDocumentLinks(doc) {
+        if (!cfg().get('links', true) || doc.lineCount > 20000) return [];
+        const links = [];
+        for (let i = 0; i < doc.lineCount; i++)
+          for (const h of scan(doc.lineAt(i).text)) {
+            if (!cat.has(h.code)) continue;
+            const l = new vscode.DocumentLink(new vscode.Range(i, h.index, i, h.index + h.length),
+              vscode.Uri.parse(`command:oraErrors.show?${encodeURIComponent(JSON.stringify([h.code]))}`));
+            l.tooltip = `${h.code}: ${cat.get(h.code).title}`; links.push(l);
+          }
+        return links;
+      }
+    }),
+    // Codes printed in the integrated terminal (SQL*Plus, SQLcl, sqlldr, app logs) become clickable.
+    vscode.window.registerTerminalLinkProvider({
+      provideTerminalLinks(ctx) {
+        if (!cfg().get('terminalLinks', true)) return [];
+        return scan(ctx.line).filter(h => cat.has(h.code)).map(h => ({ startIndex: h.index, length: h.length, tooltip: `Explain ${h.code}: ${cat.get(h.code).title}`, code: h.code }));
+      },
+      handleTerminalLink(link) { show(cat.get(link.code)); }
+    }),
+    vscode.commands.registerCommand('oraErrors.show', code => { const e = cat.get(code); if (e) show(e); else pick(code || ''); }),
+    vscode.languages.registerHoverProvider(SELECTOR, {
       provideHover(doc, pos) {
+        if (!cfg().get('hover', true)) return;
         const line = doc.lineAt(pos.line).text;
         for (const h of scan(line)) {
           if (pos.character < h.index || pos.character > h.index + h.length) continue;
@@ -73,6 +118,7 @@ function activate(context) {
     vscode.commands.registerCommand('oraErrors.openLint', () => open(LINKS.lint)),
     vscode.commands.registerCommand('oraErrors.openPro', () => open(LINKS.pro))
   );
+  updateBar();
 }
 
 function deactivate() {}

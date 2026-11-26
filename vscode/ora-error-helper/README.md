@@ -5,10 +5,17 @@ Hover any `ORA-`, `PLS-` or `TNS-` error code to see what it means and how to fi
 ## Features
 
 - **Hover**: point at `ORA-00942`, `ora 1403` or `PLS-00201` anywhere and get the cause and the fix.
+- **Ctrl+click** a code in any file to open its explanation.
+- **Terminal**: codes printed by SQL*Plus, SQLcl, sqlldr or your app in the integrated terminal are clickable.
+- **Status bar**: shows how many error codes the open file contains; click to list them.
 - **Explain error** (`ORA Error Helper: Explain error`): uses the selection, or the clipboard if nothing is selected. Also in the editor right-click menu.
 - **Browse all Oracle errors**: searchable list by code or words ("no data", "deadlock", "mutating").
 - **Find error codes in this file**: lists every code in a log file and jumps to it.
 - Each explanation links to its page in the online [ORA error reference](https://catalonec1.github.io/Gr-dina-de-stele/ora/).
+
+## Settings
+
+`oraErrors.hover`, `oraErrors.links`, `oraErrors.terminalLinks` and `oraErrors.statusBar` turn each feature on or off (all on by default).
 
 ## More tools
 
