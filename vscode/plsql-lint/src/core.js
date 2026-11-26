@@ -1,5 +1,5 @@
 'use strict';
-// Pure-JS port of plsql-lint (Python) rules PLL001-PLL015. No VS Code dependency.
+// Pure-JS port of plsql-lint (Python) rules PLL001-PLL015, plus VS Code rules PLL021-PLL024. No VS Code dependency.
 
 const K = { WORD: 'word', QUOTED: 'quoted', STRING: 'string', NUMBER: 'number', SYMBOL: 'symbol', COMMENT: 'comment' };
 const Q_CLOSERS = { '[': ']', '{': '}', '(': ')', '<': '>' };
@@ -167,7 +167,9 @@ rule('PLL004', 'compare-with-null', SEV.ERROR, 'Comparison with NULL using = or 
     if (t[i].kind !== K.SYMBOL || !COMPARE.has(t[i].text)) continue;
     if (!(isWord(t[i + 1], 'NULL') || (i > 0 && isWord(t[i - 1], 'NULL')))) continue;
     if (t[i].text === '=' && inSetClause(t, i)) continue;
-    yield [t[i], `'${t[i].text} NULL' is never true; use ${t[i].text === '=' ? 'IS NULL' : 'IS NOT NULL'}`];
+    const nx = t[i + 1];
+    const fix = isWord(nx, 'NULL') && nx.line === t[i].line ? { line: t[i].line, col: t[i].col, length: nx.col + 4 - t[i].col, text: t[i].text === '=' ? 'IS NULL' : 'IS NOT NULL' } : undefined;
+    yield [t[i], `'${t[i].text} NULL' is never true; use ${t[i].text === '=' ? 'IS NULL' : 'IS NOT NULL'}`, undefined, fix];
   }
 });
 
@@ -287,7 +289,8 @@ rule('PLL012', 'compare-with-empty-string', SEV.ERROR, "Comparison with '' is ne
     for (const s of [t[i + 1], i > 0 ? t[i - 1] : undefined]) {
       if (s && s.kind === K.STRING && ["''", "N''", "n''"].includes(s.text)) {
         if (t[i].text === '=' && inSetClause(t, i)) break;
-        yield [t[i], `'' is NULL in Oracle, so '${t[i].text} ''' is never true; use ${t[i].text === '=' ? 'IS NULL' : 'IS NOT NULL'}`];
+        const fix = s === t[i + 1] && s.line === t[i].line ? { line: t[i].line, col: t[i].col, length: s.col + s.text.length - t[i].col, text: t[i].text === '=' ? 'IS NULL' : 'IS NOT NULL' } : undefined;
+        yield [t[i], `'' is NULL in Oracle, so '${t[i].text} ''' is never true; use ${t[i].text === '=' ? 'IS NULL' : 'IS NOT NULL'}`, undefined, fix];
         break;
       }
     }
@@ -298,7 +301,7 @@ rule('PLL013', 'varchar-type', SEV.INFO, 'VARCHAR declared instead of VARCHAR2 (
   const t = ctx.toks;
   for (let i = 0; i < t.length; i++)
     if (isWord(t[i], 'VARCHAR') && t[i + 1] && t[i + 1].kind === K.SYMBOL && ['(', ';', ',', ':='].includes(t[i + 1].text))
-      yield [t[i], 'use VARCHAR2 instead of VARCHAR'];
+      yield [t[i], 'use VARCHAR2 instead of VARCHAR', undefined, { line: t[i].line, col: t[i].col, length: t[i].text.length, text: t[i].text === 'varchar' ? 'varchar2' : 'VARCHAR2' }];
 });
 
 rule('PLL014', 'not-in-subquery', SEV.WARNING, 'NOT IN (SELECT ...) returns no rows when the subquery yields a NULL; prefer NOT EXISTS.', function* (ctx) {
@@ -325,6 +328,95 @@ rule('PLL015', 'to-date-no-format', SEV.WARNING, 'TO_DATE / TO_TIMESTAMP without
   }
 });
 
+// PLL016-PLL020 are the Pro rules of the JetBrains plugin; the VS Code-only rules continue at PLL021.
+// A rule may yield a 4th element: a fix {line, col, length, text} (1-based, replaces `length` chars on one line).
+
+rule('PLL021', 'case-without-else', SEV.WARNING, 'CASE statement without ELSE raises CASE_NOT_FOUND (ORA-06592) when no WHEN matches.', function* (ctx) {
+  const t = ctx.toks;
+  for (let i = 0; i < t.length; i++) {
+    if (!isWord(t[i], 'CASE') || (i && isWord(t[i - 1], 'END'))) continue;
+    const d = ctx.blocks[i].length;
+    let hasElse = false;
+    for (let j = i + 1; j < t.length; j++) {
+      const depth = ctx.blocks[j].length;
+      if (depth <= d) break;
+      if (depth !== d + 1) continue;
+      if (isWord(t[j], 'ELSE')) hasElse = true;
+      else if (isWord(t[j], 'END')) {
+        // Only the PL/SQL statement form (END CASE) raises; a CASE expression without ELSE just returns NULL.
+        if (!hasElse && isWord(t[j + 1], 'CASE'))
+          yield [t[i], 'CASE statement without ELSE raises CASE_NOT_FOUND (ORA-06592) when no WHEN branch matches; add an ELSE branch',
+            undefined, { line: t[j].line, col: t[j].col, length: 0, text: 'ELSE NULL; ' }];
+        break;
+      }
+    }
+  }
+});
+
+const SQL_START = new Set(['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'MERGE']);
+rule('PLL022', 'sqlcode-in-sql', SEV.ERROR, 'SQLCODE / SQLERRM used directly inside a SQL statement (not allowed; assign to a variable first).', function* (ctx) {
+  const t = ctx.toks;
+  for (let i = 0; i < t.length; i++) {
+    if (!(t[i].kind === K.WORD && SQL_START.has(t[i].norm))) continue;
+    // A SELECT that opens a cursor FOR loop ends at its closing parenthesis.
+    let depth = 0;
+    for (let j = i + 1; j < t.length; j++) {
+      const x = t[j];
+      if (sym(x, ';') || isWord(x, 'LOOP')) break;
+      if (sym(x, '(')) depth++;
+      else if (sym(x, ')')) { if (--depth < 0) break; }
+      else if (isWord(x, 'SQLCODE', 'SQLERRM'))
+        yield [x, `${x.norm} cannot be used directly in a SQL statement; assign it to a local variable first (l_msg := ${x.norm};)`];
+      else if (x.kind === K.WORD && SQL_START.has(x.norm) && depth === 0) break;
+    }
+    // skip to the end of this statement so nested SELECTs are not reported twice
+    while (i + 1 < t.length && !sym(t[i + 1], ';') && !isWord(t[i + 1], 'LOOP')) i++;
+  }
+});
+
+rule('PLL023', 'bulk-fetch-notfound', SEV.WARNING, 'EXIT WHEN cursor%NOTFOUND right after FETCH ... BULK COLLECT ... LIMIT drops the last partial batch.', function* (ctx) {
+  const t = ctx.toks;
+  for (let i = 0; i < t.length; i++) {
+    if (!isWord(t[i], 'FETCH')) continue;
+    let j = i + 1, bulk = false, limit = false, into = null, multi = false;
+    for (; j < t.length && !sym(t[j], ';'); j++) {
+      if (isWord(t[j], 'BULK')) bulk = true;
+      else if (isWord(t[j], 'LIMIT')) limit = true;
+      else if (isWord(t[j], 'INTO') && !into && t[j + 1] && t[j + 1].kind === K.WORD) { into = t[j + 1]; multi = sym(t[j + 2], ','); }
+    }
+    if (!bulk || !limit) continue;
+    // EXIT WHEN <cursor> % NOTFOUND ;
+    const e = j + 1;
+    if (isWord(t[e], 'EXIT') && isWord(t[e + 1], 'WHEN') && t[e + 2] && sym(t[e + 3], '%') && isWord(t[e + 4], 'NOTFOUND')) {
+      const a = t[e + 2], z = t[e + 4];
+      const fix = into && !multi && a.line === z.line ? { line: a.line, col: a.col, length: z.col + z.text.length - a.col, text: `${into.text}.COUNT = 0` } : undefined;
+      yield [a, `with BULK COLLECT ... LIMIT, %NOTFOUND is already TRUE on the last, partial batch, so those rows are skipped; use EXIT WHEN ${into ? into.text : 'collection'}.COUNT = 0`, undefined, fix];
+    }
+  }
+});
+
+rule('PLL024', 'commit-in-trigger', SEV.ERROR, 'COMMIT / ROLLBACK in a trigger without PRAGMA AUTONOMOUS_TRANSACTION (ORA-04092 at run time).', function* (ctx) {
+  const t = ctx.toks;
+  for (let i = 0; i < t.length; i++) {
+    if (!isWord(t[i], 'CREATE')) continue;
+    let j = i + 1;
+    while (j < t.length && isWord(t[j], 'OR', 'REPLACE', 'EDITIONABLE', 'NONEDITIONABLE')) j++;
+    if (!isWord(t[j], 'TRIGGER')) continue;
+    let end = t.length;
+    for (let k = j + 1; k < t.length; k++)
+      if (isWord(t[k], 'CREATE') || (sym(t[k], '/') && sym(t[k - 1], ';'))) { end = k; break; }
+    const body = t.slice(j, end);
+    if (body.some(x => isWord(x, 'AUTONOMOUS_TRANSACTION'))) { i = end - 1; continue; }
+    for (let k = j; k < end; k++) {
+      const x = t[k];
+      if (!isWord(x, 'COMMIT', 'ROLLBACK')) continue;
+      if (isWord(t[k + 1], 'TO')) continue; // ROLLBACK TO SAVEPOINT is allowed
+      yield [x, `${x.norm} is not allowed in a trigger (ORA-04092); let the calling transaction decide, or move the work to an autonomous procedure`];
+    }
+    i = end - 1;
+  }
+});
+
 const DIRECTIVE = /plsql-lint:\s*(disable-file|disable)(?:\s*=\s*([A-Za-z0-9_,\s]+))?/gi;
 const NOQA = /\bnoqa\b(?::\s*([A-Za-z0-9_,\s]+))?/gi;
 const codes = raw => raw ? new Set(raw.split(',').map(c => c.trim().toUpperCase()).filter(Boolean)) : new Set(['*']);
@@ -332,8 +424,8 @@ const codes = raw => raw ? new Set(raw.split(',').map(c => c.trim().toUpperCase(
 /**
  * Lint source text.
  * @param {string} source
- * @param {{select?: string[], ignore?: string[], maxLineLength?: number}} [cfg]
- * @returns {{code:string,message:string,line:number,col:number,severity:string}[]}
+ * @param {{select?: string[], ignore?: string[], maxLineLength?: number, fixes?: boolean}} [cfg]
+ * @returns {{code:string,message:string,line:number,col:number,severity:string,fix?:{line:number,col:number,length:number,text:string}}[]}
  */
 function lint(source, cfg = {}) {
   const all = tokenize(source);
@@ -357,10 +449,12 @@ function lint(source, cfg = {}) {
   for (const code of Object.keys(RULES).sort()) {
     if (!select.has(code) || ignore.has(code) || fileOff.has('*') || fileOff.has(code)) continue;
     const r = RULES[code];
-    for (const [t, msg, sev] of r.fn(ctx)) {
+    for (const [t, msg, sev, fix] of r.fn(ctx)) {
       const off = lineOff.get(t.line);
       if (off && (off.has('*') || off.has(code))) continue;
-      out.push({ code, message: msg, line: t.line, col: t.col, severity: sev || r.severity });
+      const f = { code, message: msg, line: t.line, col: t.col, severity: sev || r.severity };
+      if (cfg.fixes && fix) f.fix = fix;
+      out.push(f);
     }
   }
   out.sort((a, b) => a.line - b.line || a.col - b.col || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));

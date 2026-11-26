@@ -1,8 +1,8 @@
 {
   "name": "ora-error-helper",
   "displayName": "ORA Error Helper",
-  "description": "Hover or Ctrl+click any ORA-, PLS- or TNS- error code in SQL, logs, stack traces or the terminal to see what it means and how to fix it. 250 Oracle errors explained, works offline.",
-  "version": "1.1.0",
+  "description": "Hover or Ctrl+click any ORA-, PLS- or TNS- error code in SQL, logs, stack traces or the terminal to see what it means and how to fix it. Copy explanations as Markdown, CodeLens in log files. 251 Oracle errors explained, works offline.",
+  "version": "1.2.0",
   "publisher": "catalonec",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -24,7 +24,8 @@
     "database",
     "error codes",
     "sqlplus",
-    "sqlcl"
+    "sqlcl",
+    "log viewer"
   ],
   "repository": {
     "type": "git",
@@ -59,6 +60,21 @@
         "category": "ORA Error Helper"
       },
       {
+        "command": "oraErrors.copyMarkdown",
+        "title": "Copy explanation as Markdown",
+        "category": "ORA Error Helper"
+      },
+      {
+        "command": "oraErrors.history",
+        "title": "Recently viewed errors",
+        "category": "ORA Error Helper"
+      },
+      {
+        "command": "oraErrors.clearHistory",
+        "title": "Clear recently viewed errors",
+        "category": "ORA Error Helper"
+      },
+      {
         "command": "oraErrors.openReference",
         "title": "Open online ORA error reference",
         "category": "ORA Error Helper"
@@ -80,6 +96,11 @@
           "command": "oraErrors.explain",
           "when": "editorHasSelection",
           "group": "navigation@90"
+        },
+        {
+          "command": "oraErrors.copyMarkdown",
+          "when": "editorHasSelection",
+          "group": "navigation@91"
         }
       ]
     },
@@ -105,6 +126,21 @@
           "type": "boolean",
           "default": true,
           "description": "Show how many error codes the active file contains in the status bar."
+        },
+        "oraErrors.codeLens": {
+          "type": "string",
+          "enum": [
+            "logs",
+            "all",
+            "off"
+          ],
+          "default": "logs",
+          "enumDescriptions": [
+            "Only in log and trace files (.log, .trc, .out, .err, .lst and the Log language).",
+            "In every file.",
+            "Never."
+          ],
+          "description": "Show a CodeLens with the error title above lines that contain an error code. Click it to open the explanation."
         }
       }
     }

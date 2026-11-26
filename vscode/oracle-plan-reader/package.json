@@ -1,0 +1,42 @@
+{
+  "name": "oracle-plan-reader",
+  "displayName": "Oracle Plan Reader",
+  "description": "Paste or open DBMS_XPLAN output and see what to fix: costly steps, big full table scans and cartesian joins highlighted, hover explanations of every plan operation, and a summary panel. Works offline, no database connection.",
+  "version": "1.0.0",
+  "publisher": "catalonec",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages", "Visualization", "Other"],
+  "keywords": ["oracle", "execution plan", "explain plan", "dbms_xplan", "sql tuning", "performance", "plsql", "sql", "xplan", "full table scan"],
+  "repository": { "type": "git", "url": "https://github.com/catalonec1/plsql-lint" },
+  "homepage": "https://github.com/catalonec1/plsql-lint/tree/plsql-lint/vscode/oracle-plan-reader",
+  "bugs": { "url": "https://github.com/catalonec1/plsql-lint/issues" },
+  "sponsor": { "url": "https://github.com/sponsors/catalonec1" },
+  "main": "./src/extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "languages": [{ "id": "oracle-xplan", "aliases": ["Oracle Execution Plan", "xplan"], "extensions": [".xplan"] }],
+    "commands": [
+      { "command": "oraclePlanReader.analyze", "title": "Analyze execution plan (selection or file)", "category": "Oracle Plan Reader" },
+      { "command": "oraclePlanReader.analyzeClipboard", "title": "Analyze execution plan from clipboard", "category": "Oracle Plan Reader" },
+      { "command": "oraclePlanReader.openPro", "title": "More plan checks (JetBrains plugin)", "category": "Oracle Plan Reader" },
+      { "command": "oraclePlanReader.openLint", "title": "Get PL/SQL Lint (free linter)", "category": "Oracle Plan Reader" }
+    ],
+    "menus": {
+      "commandPalette": [{ "command": "oraclePlanReader.reveal", "when": "false" }],
+      "editor/context": [{ "command": "oraclePlanReader.analyze", "when": "editorLangId == oracle-xplan || editorHasSelection", "group": "navigation@95" }]
+    },
+    "configuration": {
+      "title": "Oracle Plan Reader",
+      "properties": {
+        "oraclePlanReader.autoDetect": { "type": "boolean", "default": true, "description": "Highlight plans in any file that contains a DBMS_XPLAN table (logs, text, SQL). When off, only .xplan files are highlighted." },
+        "oraclePlanReader.diagnostics": { "type": "boolean", "default": true, "description": "Show plan findings in the Problems panel." },
+        "oraclePlanReader.inlineCostPercent": { "type": "number", "default": 10, "description": "Show \"N% of cost\" at the end of plan rows whose own cost is at least this share of the total. -1 turns it off." },
+        "oraclePlanReader.bigRows": { "type": "number", "default": 10000, "description": "A full table scan returning at least this many rows is reported." },
+        "oraclePlanReader.hotPercent": { "type": "number", "default": 50, "description": "The most expensive step is a warning (instead of info) when it has at least this share of the total cost." }
+      }
+    }
+  },
+  "scripts": { "test": "node --test test/core.test.js" }
+}

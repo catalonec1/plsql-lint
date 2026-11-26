@@ -1,6 +1,6 @@
 'use strict';
 const vscode = require('vscode');
-const { load, scan, markdown, BASE } = require('./catalog');
+const { load, scan, markdown, markdownDoc, pushRecent, isLogFile, BASE } = require('./catalog');
 
 const LINKS = {
   pro: 'https://plugins.jetbrains.com/plugin/35912-ora-error-helper',
@@ -13,17 +13,64 @@ function activate(context) {
   const cat = load();
   const open = url => vscode.env.openExternal(vscode.Uri.parse(url));
 
-  const show = e => {
-    const p = vscode.window.createWebviewPanel('oraError', e.code, vscode.ViewColumn.Beside, { enableScripts: false });
-    p.webview.html = `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
-<style>body{font-family:var(--vscode-font-family);color:var(--vscode-foreground);padding:12px 20px;line-height:1.5;max-width:760px}h1{font-size:1.3em}h2{font-size:1.05em;margin-top:1.2em}a{color:var(--vscode-textLink-foreground)}.m{opacity:.75;font-size:.9em}</style>
+  // Recently viewed codes (most recent first), kept across sessions.
+  let memory = [];
+  const state = context.globalState;
+  const recent = () => (state ? state.get('oraErrors.recent', []) : memory).filter(c => cat.has(c));
+  const remember = code => {
+    const next = pushRecent(recent(), code, 20);
+    if (state) state.update('oraErrors.recent', next); else memory = next;
+  };
+  const cmdUri = (cmd, arg) => `command:${cmd}?${encodeURIComponent(JSON.stringify([arg]))}`;
+
+  let panel = null;
+  const render = e => {
+    const hist = recent().filter(c => c !== e.code).slice(0, 10)
+      .map(c => `<li><a href="${esc(cmdUri('oraErrors.show', c))}">${esc(c)}</a> <span class="m">${esc(cat.get(c).title)}</span></li>`).join('');
+    return `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<style>body{font-family:var(--vscode-font-family);color:var(--vscode-foreground);padding:12px 20px;line-height:1.5;max-width:760px}h1{font-size:1.3em}h2{font-size:1.05em;margin-top:1.2em}a{color:var(--vscode-textLink-foreground)}.m{opacity:.75;font-size:.9em}.bar a{margin-right:14px}ul{padding-left:18px}</style>
 <h1>${esc(e.code)}: ${esc(e.title)}</h1><h2>Cause</h2><p>${esc(e.cause)}</p><h2>How to fix</h2><p>${esc(e.action)}</p>
-<p><a href="${esc(e.url)}">Full page in the ORA error reference</a></p>
+<p class="bar"><a href="${esc(e.url)}">Full page in the ORA error reference</a><a href="${esc(cmdUri('oraErrors.copyMarkdown', e.code))}">Copy as Markdown</a><a href="${esc(cmdUri('oraErrors.browse', ''))}">Search all errors</a></p>
+${hist ? `<h2>Recently viewed</h2><ul>${hist}</ul>` : ''}
 <p class="m">Using IntelliJ IDEA or DataGrip? <a href="${LINKS.pro}">ORA Error Helper for JetBrains</a> · Book: <a href="${LINKS.book}">PL/SQL in Practice</a></p>`;
+  };
+  // One explanation panel, reused: the history list replaces a pile of tabs.
+  const show = e => {
+    remember(e.code);
+    if (!panel) {
+      panel = vscode.window.createWebviewPanel('oraError', e.code, vscode.ViewColumn.Beside, { enableScripts: false, enableCommandUris: true });
+      if (panel.onDidDispose) panel.onDidDispose(() => { panel = null; });
+    } else if (panel.reveal) panel.reveal(undefined, true);
+    panel.title = e.code;
+    panel.webview.html = render(e);
+  };
+
+  const copyMd = async e => {
+    await vscode.env.clipboard.writeText(markdownDoc(e));
+    vscode.window.showInformationMessage(`${e.code} explanation copied as Markdown.`);
+  };
+  // Code under the cursor or in the selection, else the clipboard.
+  const codeFromEditor = async () => {
+    const ed = vscode.window.activeTextEditor;
+    if (ed) {
+      const sel = ed.document.getText(ed.selection);
+      const inSel = scan(sel || '');
+      if (inSel.length) return inSel[0].code;
+      const p = ed.selection.active;
+      const hit = scan(ed.document.lineAt(p.line).text).find(h => p.character >= h.index && p.character <= h.index + h.length);
+      if (hit) return hit.code;
+    }
+    const clip = scan((await vscode.env.clipboard.readText()) || '');
+    return clip.length ? clip[0].code : '';
   };
 
   const pick = async initial => {
-    const items = [...cat.values()].map(e => ({ label: e.code, description: e.title, e }));
+    const rec = recent();
+    const all = [...cat.values()].map(e => ({ label: e.code, description: e.title, e }));
+    const Sep = vscode.QuickPickItemKind && vscode.QuickPickItemKind.Separator;
+    const items = rec.length && Sep && !initial
+      ? [{ label: 'Recently viewed', kind: Sep }, ...rec.map(c => ({ label: c, description: cat.get(c).title, e: cat.get(c) })), { label: 'All errors', kind: Sep }, ...all]
+      : all;
     const qp = vscode.window.createQuickPick();
     qp.items = items; qp.matchOnDescription = true; qp.placeholder = 'Type an error code or words, e.g. ORA-01403 or "no data"';
     qp.value = initial || '';
@@ -36,6 +83,8 @@ function activate(context) {
   const SELECTOR = [{ scheme: 'file' }, { scheme: 'untitled' }, { scheme: 'output' }, { scheme: 'vscode-notebook-cell' }];
 
   // Status bar: shows the error codes found in the active editor; click to list them.
+  const lensEvents = new vscode.EventEmitter();
+  context.subscriptions.push(lensEvents);
   const bar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 90);
   bar.command = 'oraErrors.scanFile';
   const updateBar = () => {
@@ -52,7 +101,7 @@ function activate(context) {
     bar,
     vscode.window.onDidChangeActiveTextEditor(updateBar),
     vscode.workspace.onDidChangeTextDocument(e => { if (vscode.window.activeTextEditor && e.document === vscode.window.activeTextEditor.document) later(); }),
-    vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('oraErrors')) updateBar(); }),
+    vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('oraErrors')) { updateBar(); lensEvents.fire(); } }),
     // Ctrl+click on a code in a file opens its explanation.
     vscode.languages.registerDocumentLinkProvider(SELECTOR, {
       provideDocumentLinks(doc) {
@@ -77,6 +126,25 @@ function activate(context) {
       handleTerminalLink(link) { show(cat.get(link.code)); }
     }),
     vscode.commands.registerCommand('oraErrors.show', code => { const e = cat.get(code); if (e) show(e); else pick(code || ''); }),
+    // Optional CodeLens above each line with an error code: in log/trace files by default, or everywhere.
+    vscode.languages.registerCodeLensProvider(SELECTOR, {
+      onDidChangeCodeLenses: lensEvents.event,
+      provideCodeLenses(doc) {
+        const mode = cfg().get('codeLens', 'logs');
+        if (mode === 'off' || (mode === 'logs' && !isLogFile(doc.languageId, doc.fileName)) || doc.lineCount > 20000) return [];
+        const lenses = [];
+        for (let i = 0; i < doc.lineCount && lenses.length < 500; i++) {
+          const seen = new Set();
+          for (const h of scan(doc.lineAt(i).text)) {
+            if (!cat.has(h.code) || seen.has(h.code)) continue;
+            seen.add(h.code);
+            lenses.push(new vscode.CodeLens(new vscode.Range(i, h.index, i, h.index + h.length),
+              { title: `${h.code}: ${cat.get(h.code).title}`, command: 'oraErrors.show', arguments: [h.code] }));
+          }
+        }
+        return lenses;
+      }
+    }),
     vscode.languages.registerHoverProvider(SELECTOR, {
       provideHover(doc, pos) {
         if (!cfg().get('hover', true)) return;
@@ -84,7 +152,10 @@ function activate(context) {
         for (const h of scan(line)) {
           if (pos.character < h.index || pos.character > h.index + h.length) continue;
           const e = cat.get(h.code);
-          const md = new vscode.MarkdownString(e ? markdown(e) : `**${h.code}** is not in the offline catalog yet. [Search the ORA error reference](${BASE}#search)`);
+          const md = new vscode.MarkdownString(e
+            ? `${markdown(e)} · [Copy as Markdown](${cmdUri('oraErrors.copyMarkdown', e.code)}) · [Open panel](${cmdUri('oraErrors.show', e.code)})`
+            : `**${h.code}** is not in the offline catalog yet. [Search the ORA error reference](${BASE}#search)`);
+          md.isTrusted = { enabledCommands: ['oraErrors.copyMarkdown', 'oraErrors.show'] };
           return new vscode.Hover(md, new vscode.Range(pos.line, h.index, pos.line, h.index + h.length));
         }
       }
@@ -98,6 +169,21 @@ function activate(context) {
       return pick(hits.length ? hits[0].code : '');
     }),
     vscode.commands.registerCommand('oraErrors.browse', () => pick('')),
+    vscode.commands.registerCommand('oraErrors.copyMarkdown', async code => {
+      const c = typeof code === 'string' && code ? code : await codeFromEditor();
+      const e = cat.get(c);
+      if (e) return copyMd(e);
+      const s = await vscode.window.showQuickPick([...cat.values()].map(x => ({ label: x.code, description: x.title, e: x })),
+        { placeHolder: 'Pick the error to copy as Markdown', matchOnDescription: true });
+      if (s) return copyMd(s.e);
+    }),
+    vscode.commands.registerCommand('oraErrors.history', async () => {
+      const rec = recent();
+      if (!rec.length) return vscode.window.showInformationMessage('No error explanations viewed yet.');
+      const s = await vscode.window.showQuickPick(rec.map(c => ({ label: c, description: cat.get(c).title })), { placeHolder: 'Recently viewed Oracle errors' });
+      if (s) show(cat.get(s.label));
+    }),
+    vscode.commands.registerCommand('oraErrors.clearHistory', () => { if (state) state.update('oraErrors.recent', []); memory = []; }),
     vscode.commands.registerCommand('oraErrors.scanFile', async () => {
       const ed = vscode.window.activeTextEditor;
       if (!ed) return;

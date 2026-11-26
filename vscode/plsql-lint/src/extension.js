@@ -15,12 +15,14 @@ function activate(context) {
   const diags = vscode.languages.createDiagnosticCollection('plsql-lint');
   context.subscriptions.push(diags);
   const timers = new Map();
+  const fixes = new WeakMap(); // Diagnostic -> {line, col, length, text}
+  const FIX_TITLE = { PLL004: 'Use IS [NOT] NULL', PLL012: 'Use IS [NOT] NULL', PLL013: 'Change to VARCHAR2', PLL021: 'Add ELSE NULL branch', PLL023: 'Exit when the collection is empty' };
 
   const run = doc => {
     const cfg = vscode.workspace.getConfiguration('plsqlLint', doc.uri);
     if (!cfg.get('enable', true) || !LANGS.has(doc.languageId)) { diags.delete(doc.uri); return; }
     const select = Object.keys(RULES).filter(c => c !== 'PLL009' || cfg.get('checkLineLength', false));
-    const findings = lint(doc.getText(), { select, ignore: cfg.get('ignore', []).map(s => String(s).toUpperCase()), maxLineLength: cfg.get('maxLineLength', 120) });
+    const findings = lint(doc.getText(), { select, ignore: cfg.get('ignore', []).map(s => String(s).toUpperCase()), maxLineLength: cfg.get('maxLineLength', 120), fixes: true });
     diags.set(doc.uri, findings.map(f => {
       const line = Math.max(0, f.line - 1);
       const col = Math.max(0, f.col - 1);
@@ -30,6 +32,7 @@ function activate(context) {
       const d = new vscode.Diagnostic(new vscode.Range(line, col, line, Math.max(end, col + 1)), f.message, SEV[f.severity]);
       d.source = 'plsql-lint';
       d.code = { value: f.code, target: vscode.Uri.parse(LINKS.rules) };
+      if (f.fix) fixes.set(d, f.fix);
       return d;
     }));
   };
@@ -45,15 +48,25 @@ function activate(context) {
     vscode.workspace.onDidChangeConfiguration(e => { if (e.affectsConfiguration('plsqlLint')) vscode.workspace.textDocuments.forEach(run); }),
     vscode.languages.registerCodeActionsProvider([...LANGS].map(language => ({ language })), {
       provideCodeActions(doc, _range, ctx) {
-        return ctx.diagnostics.filter(d => d.source === 'plsql-lint').map(d => {
+        const out = [];
+        for (const d of ctx.diagnostics.filter(x => x.source === 'plsql-lint')) {
           const code = typeof d.code === 'object' ? d.code.value : d.code;
+          const fx = fixes.get(d);
+          if (fx) {
+            const r = new vscode.CodeAction(`${FIX_TITLE[code] || 'Fix'} (${code})`, vscode.CodeActionKind.QuickFix);
+            r.edit = new vscode.WorkspaceEdit();
+            r.edit.replace(doc.uri, new vscode.Range(fx.line - 1, fx.col - 1, fx.line - 1, fx.col - 1 + fx.length), fx.text);
+            r.diagnostics = [d]; r.isPreferred = true;
+            out.push(r);
+          }
           const a = new vscode.CodeAction(`Ignore ${code} on this line`, vscode.CodeActionKind.QuickFix);
           const line = doc.lineAt(d.range.start.line);
           a.edit = new vscode.WorkspaceEdit();
           a.edit.insert(doc.uri, line.range.end, ` -- noqa: ${code}`);
           a.diagnostics = [d];
-          return a;
-        });
+          out.push(a);
+        }
+        return out;
       }
     }, { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] }),
     vscode.commands.registerCommand('plsqlLint.lintFile', () => {

@@ -28,4 +28,19 @@ function markdown(e) {
   return `**${e.code}: ${e.title}**\n\n**Cause.** ${e.cause}\n\n**Fix.** ${e.action}\n\n[Open ${e.code} in the ORA error reference](${e.url})`;
 }
 
-module.exports = { load, scan, normalize, markdown, BASE };
+/** Stand-alone Markdown for tickets, chat, wikis or commit messages. */
+function markdownDoc(e) {
+  return `### ${e.code}: ${e.title}\n\n**Cause:** ${e.cause}\n\n**Fix:** ${e.action}\n\nReference: ${e.url}\n`;
+}
+
+/** Most recent first, no duplicates, at most `max` entries. */
+function pushRecent(list, code, max = 20) {
+  return [code, ...(list || []).filter(c => c !== code)].slice(0, max);
+}
+
+/** True for files that look like logs or traces (CodeLens "logs" mode). */
+function isLogFile(languageId, fileName) {
+  return languageId === 'log' || /\.(log|trc|out|err|lst)$/i.test(fileName || '') || /\.log\.\d+$/i.test(fileName || '');
+}
+
+module.exports = { load, scan, normalize, markdown, markdownDoc, pushRecent, isLogFile, BASE };

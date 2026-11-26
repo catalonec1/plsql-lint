@@ -11,15 +11,19 @@ Hover any `ORA-`, `PLS-` or `TNS-` error code to see what it means and how to fi
 - **Explain error** (`ORA Error Helper: Explain error`): uses the selection, or the clipboard if nothing is selected. Also in the editor right-click menu.
 - **Browse all Oracle errors**: searchable list by code or words ("no data", "deadlock", "mutating").
 - **Find error codes in this file**: lists every code in a log file and jumps to it.
+- **CodeLens in log files**: a clickable line with the error title appears above every line that contains a code, in `.log`, `.trc`, `.out`, `.err`, `.lst` files (setting `oraErrors.codeLens`: `logs`, `all` or `off`).
+- **Copy explanation as Markdown** (`ORA Error Helper: Copy explanation as Markdown`): code under the cursor, in the selection or on the clipboard, ready to paste into a ticket, chat or wiki. Also a link in the hover and in the explanation panel.
+- **Recently viewed**: the explanation panel lists the errors you opened lately; `Browse all Oracle errors` shows them first, and `Recently viewed errors` reopens one.
 - Each explanation links to its page in the online [ORA error reference](https://catalonec1.github.io/Gr-dina-de-stele/ora/).
 
 ## Settings
 
-`oraErrors.hover`, `oraErrors.links`, `oraErrors.terminalLinks` and `oraErrors.statusBar` turn each feature on or off (all on by default).
+`oraErrors.hover`, `oraErrors.links`, `oraErrors.terminalLinks` and `oraErrors.statusBar` turn each feature on or off (all on by default). `oraErrors.codeLens` is `logs` (default), `all` or `off`.
 
 ## More tools
 
 - [PL/SQL Lint for VS Code](https://marketplace.visualstudio.com/items?itemName=catalonec.plsql-lint): catches PL/SQL bugs while you type (free).
+- [Oracle Plan Reader](https://marketplace.visualstudio.com/items?itemName=catalonec.oracle-plan-reader) and [SQL Case & Format for Oracle](https://marketplace.visualstudio.com/items?itemName=catalonec.oracle-sql-tidy) for VS Code (free).
 - JetBrains IDEs: [ORA Error Helper](https://plugins.jetbrains.com/plugin/35912-ora-error-helper), [PL/SQL Lint](https://plugins.jetbrains.com/plugin/35825-pl-sql-lint), [Oracle Plan Reader](https://plugins.jetbrains.com/plugin/35913-oracle-plan-reader).
 - Book: [PL/SQL in Practice](https://www.amazon.com/s?k=%22PL%2FSQL+in+Practice%22&i=digital-text) (Kindle).
 

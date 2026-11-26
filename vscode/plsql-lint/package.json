@@ -1,14 +1,14 @@
 {
   "name": "plsql-lint",
   "displayName": "PL/SQL Lint",
-  "description": "Oracle SQL and PL/SQL linter: catches WHEN OTHERS THEN NULL, = NULL, COMMIT in loops, SQL injection via EXECUTE IMMEDIATE and 11 more bugs while you type.",
-  "version": "1.0.1",
+  "description": "Oracle SQL and PL/SQL linter: catches WHEN OTHERS THEN NULL, = NULL, COMMIT in loops, SQL injection via EXECUTE IMMEDIATE and 15 more bugs while you type, with quick fixes.",
+  "version": "1.1.0",
   "publisher": "catalonec",
   "license": "MIT",
   "icon": "images/icon.png",
   "engines": { "vscode": "^1.75.0" },
   "categories": ["Linters", "Programming Languages"],
-  "keywords": ["plsql", "pl/sql", "oracle", "sql", "linter", "oracle sql", "static analysis"],
+  "keywords": ["plsql", "pl/sql", "oracle", "sql", "linter", "oracle sql", "static analysis", "bulk collect", "trigger"],
   "repository": { "type": "git", "url": "https://github.com/catalonec1/plsql-lint" },
   "homepage": "https://github.com/catalonec1/plsql-lint/tree/plsql-lint/vscode/plsql-lint",
   "bugs": { "url": "https://github.com/catalonec1/plsql-lint/issues" },
@@ -31,7 +31,7 @@
       "title": "PL/SQL Lint",
       "properties": {
         "plsqlLint.enable": { "type": "boolean", "default": true, "description": "Lint SQL and PL/SQL files." },
-        "plsqlLint.ignore": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Rule codes to turn off, e.g. [\"PLL006\"]." },
+        "plsqlLint.ignore": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Rule codes to turn off, e.g. [\"PLL006\", \"PLL021\"]." },
         "plsqlLint.checkLineLength": { "type": "boolean", "default": false, "description": "Enable PLL009 (line too long)." },
         "plsqlLint.maxLineLength": { "type": "number", "default": 120, "description": "Maximum line length for PLL009." }
       }
