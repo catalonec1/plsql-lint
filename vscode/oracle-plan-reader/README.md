@@ -46,7 +46,7 @@ The thresholds are rules of thumb: a finding is a place to look, not a verdict.
 ## More tools
 
 - [Oracle Plan Reader for JetBrains IDEs](https://plugins.jetbrains.com/plugin/35913-oracle-plan-reader): 12 more checks (estimate errors, implicit conversions, nested loops over big row sources, partition pruning, temp spills, dynamic statistics...).
-- [PL/SQL Lint](https://marketplace.visualstudio.com/items?itemName=catalonec.plsql-lint), [ORA Error Helper](https://marketplace.visualstudio.com/items?itemName=catalonec.ora-error-helper) and [SQL Case & Format for Oracle](https://marketplace.visualstudio.com/items?itemName=catalonec.oracle-sql-tidy) for VS Code (free).
+- [PL/SQL Lint](https://marketplace.visualstudio.com/items?itemName=catalonec.plsql-lint), [ORA Error Helper](https://marketplace.visualstudio.com/items?itemName=catalonec.ora-error-helper) and [Oracle SQL Tidy](https://marketplace.visualstudio.com/items?itemName=catalonec.oracle-sql-tidy) for VS Code (free).
 
 Oracle is a registered trademark of Oracle Corporation; this extension is not affiliated with Oracle.
 
