@@ -5,7 +5,8 @@
 const { tokenize } = require('./lexer');
 const { KEYWORDS, FUNCTIONS } = require('./words');
 
-const DEFAULTS = { keywordCase: 'upper', functionCase: 'upper', identifierCase: 'preserve', indentSize: 4, useTabs: false, commaStyle: 'trailing' };
+const DEFAULTS = { keywordCase: 'upper', functionCase: null, identifierCase: 'preserve', indentSize: 4, useTabs: false, commaStyle: 'trailing', maxLineWidth: 0, baseIndent: '' };
+// functionCase null = same as keywordCase; maxLineWidth 0 = no soft wrapping
 
 const applyCase = (s, mode) => mode === 'upper' ? s.toUpperCase() : mode === 'lower' ? s.toLowerCase() : s;
 
@@ -17,7 +18,7 @@ function wordCase(toks, i, o) {
   const dotted = (prev && prev.text === '.') || (next && next.text === '.');
   if (prev && prev.text === '%' && KEYWORDS.has(up)) return applyCase(t.text, o.keywordCase); // %ROWTYPE, %NOTFOUND
   if (dotted) return applyCase(t.text, o.identifierCase);
-  if (FUNCTIONS.has(up) && next && next.text === '(') return applyCase(t.text, o.functionCase);
+  if (FUNCTIONS.has(up) && next && next.text === '(') return applyCase(t.text, o.functionCase || o.keywordCase);
   if (KEYWORDS.has(up)) return applyCase(t.text, o.keywordCase);
   return applyCase(t.text, o.identifierCase);
 }
@@ -52,17 +53,19 @@ function sameTokens(a, b) {
 
 const SPACE_PAREN = new Set(['IN', 'AND', 'OR', 'NOT', 'EXISTS', 'AS', 'IS', 'FROM', 'JOIN', 'ON', 'USING', 'VALUES', 'INTO', 'SELECT',
   'WHERE', 'THEN', 'ELSE', 'WHEN', 'RETURN', 'RETURNING', 'BY', 'OVER', 'GROUP', 'HAVING', 'SET', 'ALL', 'ANY', 'SOME', 'UNION',
-  'INTERSECT', 'MINUS', 'CASE', 'LOOP', 'IF', 'ELSIF', 'WHILE', 'PIVOT', 'UNPIVOT', 'FOR', 'BETWEEN', 'LIKE', 'MATCHED', 'DEFAULT', 'CHECK', 'KEY', 'LATERAL', 'APPLY', 'WITH']);
+  'INTERSECT', 'MINUS', 'INSERT', 'CASE', 'LOOP', 'IF', 'ELSIF', 'WHILE', 'PIVOT', 'UNPIVOT', 'FOR', 'BETWEEN', 'LIKE', 'MATCHED', 'DEFAULT', 'CHECK', 'KEY', 'LATERAL', 'APPLY', 'WITH']);
 const SPACE_PAREN_AFTER_NAME = new Set(['INTO', 'TABLE', 'VIEW', 'ON', 'TYPE', 'INDEX', 'CURSOR', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'REFERENCES']);
 const UNARY_AFTER = new Set(['RETURN', 'THEN', 'ELSE', 'SELECT', 'WHEN', 'AND', 'OR', 'NOT', 'IN', 'BY', 'VALUES', 'WHERE', 'SET', 'ON', 'IS', 'BETWEEN', 'LIKE']);
 const JOIN_START = { LEFT: ['OUTER', 'JOIN'], RIGHT: ['OUTER', 'JOIN'], FULL: ['OUTER', 'JOIN'], INNER: ['JOIN'], CROSS: ['JOIN', 'APPLY'], NATURAL: ['JOIN', 'LEFT', 'RIGHT', 'FULL', 'INNER'], OUTER: ['APPLY'], JOIN: null };
+const SQLPLUS_WORDS = new Set(['PROMPT', 'PRO', 'REM', 'REMARK', 'SPOOL', 'SPO', 'DEFINE', 'DEF', 'UNDEFINE', 'UNDEF', 'WHENEVER', 'SHOW', 'SHO', 'EXEC',
+  'TTITLE', 'BTITLE', 'CLEAR', 'PAUSE', 'HOST', 'ACCEPT', 'ACC', 'BREAK', 'COMPUTE', 'SET', 'COL', 'COLUMN', 'VAR', 'VARIABLE', 'PRINT', 'DESC', 'DESCRIBE']);
 const COND_CLAUSES = new Set(['WHERE', 'HAVING', 'ON', 'CONNECT', 'START']);
 const LIST_CLAUSES = new Set(['SELECT', 'GROUP', 'ORDER', 'SET', 'FROM', 'WITH']);
 
 /**
  * Formats SQL and PL/SQL.
  * @param {string} src
- * @param {{keywordCase?:string, functionCase?:string, identifierCase?:string, indentSize?:number, useTabs?:boolean, commaStyle?:'trailing'|'leading'}} [opts]
+ * @param {{keywordCase?:string, functionCase?:string, identifierCase?:string, indentSize?:number, useTabs?:boolean, commaStyle?:'trailing'|'leading', maxLineWidth?:number, baseIndent?:string}} [opts]
  */
 function format(src, opts = {}) {
   const o = Object.assign({}, DEFAULTS, opts);
@@ -73,7 +76,7 @@ function format(src, opts = {}) {
   let last = null;           // last emitted token (with .out text and flags)
   let pendingBreak = false;  // a line comment ended the line
 
-  const flush = () => { if (cur.text !== '') lines.push(unit.repeat(cur.indent) + cur.text); };
+  const flush = () => { if (cur.text !== '') lines.push(o.baseIndent + unit.repeat(cur.indent) + cur.text); };
   const nl = ind => { flush(); cur = { indent: Math.max(0, ind), text: '' }; pendingBreak = false; last = cur.text === '' ? last : last; };
   const nlIf = ind => { if (cur.text !== '') nl(ind); else { cur.indent = Math.max(0, ind); pendingBreak = false; } };
   const blankLine = () => { flush(); if (lines.length && lines[lines.length - 1] !== '') lines.push(''); cur = { indent: cur.indent, text: '' }; };
@@ -106,10 +109,19 @@ function format(src, opts = {}) {
     }
     return true;
   }
+  const width = () => o.baseIndent.length + unit.length * cur.indent + cur.text.length;
+  // a soft wrap never splits a multi-line token, never moves a comment and never leaves "/" or a SQL*Plus word at a line start
+  const canWrap = out => out.type !== 'lcomment' && out.type !== 'bcomment' && !cur.text.includes('\n') && !out.text.includes('\n')
+    && cur.text !== '/' && !(out.type === 'word' && SQLPLUS_WORDS.has(out.text.toUpperCase())) && out.text !== '@';
   function emit(t, text) {
     if (pendingBreak) nl(cur.indent);
     const out = { type: t.type, text: text === undefined ? t.text : text, unary: false, prevWord: null };
-    if (spaceBetween(last, out)) cur.text += ' ';
+    if (spaceBetween(last, out)) {
+      if (o.maxLineWidth > 0 && canWrap(out) && width() + 1 + out.text.length > o.maxLineWidth) {
+        const cont = (cur.cont === undefined ? cur.indent : cur.cont) + 1;
+        flush(); cur = { indent: cont, text: '', cont: cont - 1 };
+      } else cur.text += ' ';
+    }
     cur.text += out.text;
     out.prevWord = last && last.type === 'word' ? last.text.toUpperCase() : null;
     last = out;
@@ -130,6 +142,10 @@ function format(src, opts = {}) {
     // comments and SQL*Plus lines are copied as they are
     if (t.type === 'lcomment' || t.type === 'bcomment') {
       if (t.sol && cur.text !== '') nl(stmtStart ? stmtIndent() : cur.indent);
+      if (!t.sol && cur.text === '' && !pendingBreak && lines.length && lines[lines.length - 1] !== '') {
+        lines[lines.length - 1] += ' ' + t.text.replace(/\s+$/, '');   // "x := 1; -- note" keeps its comment
+        continue;
+      }
       const save = last;
       emit(t, t.text.replace(/\s+$/, ''));
       last = save && t.type === 'bcomment' && !t.sol ? { ...save, unary: false } : save;
@@ -156,7 +172,7 @@ function format(src, opts = {}) {
 
       if (atRoot && caseExpr === 0) {
         // ---- PL/SQL blocks
-        if (up === 'DECLARE' && stmtStart) {
+        if (up === 'DECLARE' && (stmtStart || header === 'TRIGGER')) {
           nlIf(stmtIndent()); emit(t, text);
           blocks.push({ type: 'decl', inner: stmtIndent() + 1 });
           nl(top().inner); endStatement(); continue;
@@ -178,7 +194,7 @@ function format(src, opts = {}) {
         }
         if (up === 'WHEN' && top() && ((stmtStart && top().exc) || (top().type === 'case' && (stmtStart || top().firstWhen)))) {
           const b = top(); b.handler = false; b.firstWhen = false;
-          nlIf(b.inner); emit(t, text); ctl = 'when'; continue;
+          nlIf(b.inner); emit(t, text); ctl = 'when'; stmtStart = false; continue;
         }
         if (up === 'THEN' && (ctl === 'when' || ctl === 'if')) {
           emit(t, text);
@@ -187,9 +203,9 @@ function format(src, opts = {}) {
         }
         if (up === 'IF' && stmtStart) {
           const ind = stmtIndent(); nlIf(ind); emit(t, text);
-          blocks.push({ type: 'if', inner: ind + 1 }); ctl = 'if'; continue;
+          blocks.push({ type: 'if', inner: ind + 1 }); ctl = 'if'; stmtStart = false; continue;
         }
-        if (up === 'ELSIF' && top() && top().type === 'if') { nlIf(top().inner - 1); emit(t, text); ctl = 'if'; continue; }
+        if (up === 'ELSIF' && top() && top().type === 'if') { nlIf(top().inner - 1); emit(t, text); ctl = 'if'; stmtStart = false; continue; }
         if (up === 'ELSE' && top() && top().type === 'if' && (stmtStart || ctl === null)) {
           nlIf(top().inner - 1); emit(t, text); nl(top().inner); endStatement(); continue;
         }
@@ -198,9 +214,9 @@ function format(src, opts = {}) {
         }
         if (up === 'CASE' && stmtStart) {
           const ind = stmtIndent(); nlIf(ind); emit(t, text);
-          blocks.push({ type: 'case', inner: ind + 1, firstWhen: true }); continue;
+          blocks.push({ type: 'case', inner: ind + 1, firstWhen: true }); stmtStart = false; continue;
         }
-        if ((up === 'FOR' || up === 'WHILE') && stmtStart) { ctl = 'loop'; ctlIndent = stmtIndent(); nlIf(ctlIndent); emit(t, text); continue; }
+        if ((up === 'FOR' || up === 'WHILE') && stmtStart) { ctl = 'loop'; ctlIndent = stmtIndent(); nlIf(ctlIndent); emit(t, text); stmtStart = false; continue; }
         if (up === 'LOOP' && (stmtStart || ctl === 'loop')) {
           const ind = ctl === 'loop' ? ctlIndent : stmtIndent();
           if (stmtStart) nlIf(ind);
@@ -238,7 +254,7 @@ function format(src, opts = {}) {
         if (up === 'SELECT') {
           clause = 'SELECT';
           if (lu === '(' || cur.text === '') brk = null;
-          else if (['UNION', 'ALL', 'INTERSECT', 'MINUS', 'EXCEPT', 'DISTINCT'].includes(lu)) brk = f.base;
+          else if (['UNION', 'ALL', 'INTERSECT', 'MINUS', 'EXCEPT', 'DISTINCT'].includes(lu) || (f.stmt === 'WITH' && lu === ')')) brk = f.base;
           else { if (!f.bumped) { f.bumped = true; f.base++; } brk = f.base; }
         } else if (up === 'FROM' && lu !== 'DELETE' && f.clause !== 'FETCHCUR') { clause = 'FROM'; brk = f.base; }
         else if (up === 'WHERE' || up === 'HAVING') { clause = up; brk = f.base; }
@@ -316,7 +332,9 @@ function format(src, opts = {}) {
   }
   flush();
   while (lines.length && lines[lines.length - 1] === '') lines.pop();
-  return lines.map(l => l.replace(/[ \t]+$/, '')).join('\n') + (lines.length ? '\n' : '');
+  // trimming the end also keeps an unterminated string or comment at the end of the text from growing on every run
+  const text = lines.map(l => l.replace(/[ \t]+$/, '')).join('\n').replace(/\s+$/, '');
+  return text ? text + '\n' : '';
 }
 
 function isUnaryContext(toks, i) {

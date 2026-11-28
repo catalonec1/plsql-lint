@@ -30,7 +30,7 @@ function tokenize(src) {
     const c = src[i];
     if (c === '\n') { nl++; sol = true; i++; continue; }
     if (c === ' ' || c === '\t' || c === '\r' || c === '\f' || c === '\v' || c === ' ' || c === '﻿') { i++; continue; }
-    if (sol) {
+    if (sol && commandAllowed(out)) {
       let e = src.indexOf('\n', i); if (e === -1) e = n;
       const line = src.slice(i, e);
       if (SQLPLUS.some(r => r.test(line))) { push('sqlplus', line.endsWith('\r') ? e - 1 : e); continue; }
@@ -74,6 +74,16 @@ function tokenize(src) {
     push('op', i + 1);
   }
   return out;
+}
+
+/** SQL*Plus commands are recognised only where a new command can start: at the top, or after ";", "/" or another command. */
+function commandAllowed(out) {
+  for (let k = out.length - 1; k >= 0; k--) {
+    const t = out[k];
+    if (t.type === 'lcomment' || t.type === 'bcomment') continue;
+    return t.type === 'sqlplus' || (t.type === 'op' && (t.text === ';' || (t.text === '/' && t.sol)));
+  }
+  return true;
 }
 
 module.exports = { tokenize };

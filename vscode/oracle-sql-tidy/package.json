@@ -1,0 +1,37 @@
+{
+  "name": "oracle-sql-tidy",
+  "displayName": "Oracle SQL Tidy",
+  "description": "Formatter for Oracle SQL and PL/SQL: keyword case, indentation, leading or trailing commas, soft line width. Never drops or reorders a token: comments, strings, q'[...]' quotes and / terminators are kept as written.",
+  "version": "1.0.0",
+  "publisher": "catalonec",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Formatters", "Programming Languages"],
+  "keywords": ["oracle", "sql", "plsql", "pl/sql", "formatter", "sql formatter", "beautifier", "pretty print", "sqlplus", "oracle sql"],
+  "repository": { "type": "git", "url": "https://github.com/catalonec1/plsql-lint" },
+  "homepage": "https://github.com/catalonec1/plsql-lint/tree/plsql-lint/vscode/oracle-sql-tidy",
+  "bugs": { "url": "https://github.com/catalonec1/plsql-lint/issues" },
+  "sponsor": { "url": "https://github.com/sponsors/catalonec1" },
+  "main": "./src/extension.js",
+  "activationEvents": ["onLanguage:plsql", "onLanguage:sql", "onLanguage:oraclesql", "onLanguage:oracle-sql"],
+  "contributes": {
+    "languages": [{ "id": "plsql", "aliases": ["PL/SQL", "plsql"], "extensions": [".pks", ".pkb", ".pls"] }],
+    "commands": [
+      { "command": "oracleSqlTidy.format", "title": "Format Document/Selection", "category": "Oracle SQL Tidy" }
+    ],
+    "menus": {
+      "editor/context": [{ "command": "oracleSqlTidy.format", "when": "editorLangId == sql || editorLangId == plsql || editorLangId == oraclesql || editorLangId == oracle-sql", "group": "1_modification@90" }]
+    },
+    "configuration": {
+      "title": "Oracle SQL Tidy",
+      "properties": {
+        "oracleSqlTidy.keywordCase": { "type": "string", "enum": ["upper", "lower", "preserve"], "default": "upper", "description": "Case of SQL and PL/SQL keywords and built-in functions. Identifiers, strings and quoted names are never changed." },
+        "oracleSqlTidy.indentSize": { "type": "number", "default": 0, "minimum": 0, "maximum": 16, "description": "Spaces per indentation level. 0 uses the editor's tab size and tabs/spaces setting." },
+        "oracleSqlTidy.commaStyle": { "type": "string", "enum": ["trailing", "leading"], "default": "trailing", "enumDescriptions": ["a,\\n    b", "a\\n    , b"], "description": "Where commas go when a select list, SET list or parameter list is split over lines." },
+        "oracleSqlTidy.maxLineWidth": { "type": "number", "default": 120, "minimum": 0, "description": "Soft line width: longer lines are wrapped between tokens (never inside strings or comments). 0 turns wrapping off." }
+      }
+    }
+  },
+  "scripts": { "test": "node --test test/format.test.js test/extension.test.js" }
+}
